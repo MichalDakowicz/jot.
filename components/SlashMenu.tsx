@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { shownFrom } from '../lib/menu';
 import type { SlashItem } from '../lib/typing';
 import { c, f, shadow } from '../theme/tokens';
 
@@ -10,13 +11,17 @@ export type CaretSpot = { x: number; y: number; height: number };
 const WIDTH = 244;
 const ROW = 44;
 const CHROME = 34;
+/** Rows shown at once; the arrows scroll the rest into view. */
+const ROWS = 5;
 
 /**
  * The block list a slash opens.
  *
  * It sits by the caret when the platform can say where that is, and falls back
  * to a panel above the keyboard when it cannot. The first row is highlighted,
- * so Return takes it without anything else being pressed.
+ * so Return takes it without anything else being pressed, and the arrows walk
+ * the whole list — the rows past the fifth scroll in as the highlight reaches
+ * them.
  */
 export function SlashMenu({
   hits,
@@ -24,6 +29,7 @@ export function SlashMenu({
   bottom,
   at,
   active = 0,
+  onHover,
 }: {
   hits: SlashItem[];
   onPick: (item: SlashItem) => void;
@@ -33,11 +39,15 @@ export function SlashMenu({
   at?: CaretSpot | null;
   /** Which row Return would take. */
   active?: number;
+  /** The pointer is over a row: it becomes the one Return takes. */
+  onHover?: (index: number) => void;
 }) {
   const { width, height } = useWindowDimensions();
+  const from = useRef(0);
   if (!hits.length) return null;
 
-  const shown = hits.slice(0, 5);
+  from.current = shownFrom(from.current, active, hits.length, ROWS);
+  const shown = hits.slice(from.current, from.current + ROWS);
   const box = CHROME + shown.length * ROW;
 
   // By the caret, kept on screen, and flipped above the line when there is no
@@ -53,25 +63,29 @@ export function SlashMenu({
   return (
     <View style={[styles.panel, spot]}>
       <Text style={styles.label}>Insert a block</Text>
-      {shown.map((it, i) => (
-        <Pressable
-          key={it.key}
-          onPress={() => onPick(it)}
-          style={({ pressed }) => [
-            styles.row,
-            i === active && styles.rowOn,
-            pressed && { backgroundColor: c.a200 },
-          ]}
-        >
-          <View style={[styles.badge, i === active && styles.badgeOn]}>
-            <Text style={styles.badgeText}>{it.badge}</Text>
-          </View>
-          <Text style={styles.title} numberOfLines={1}>
-            {it.label}
-          </Text>
-          {i === active ? <Text style={styles.enter}>↵</Text> : null}
-        </Pressable>
-      ))}
+      {shown.map((it, k) => {
+        const i = from.current + k;
+        return (
+          <Pressable
+            key={it.key}
+            onPress={() => onPick(it)}
+            onHoverIn={() => onHover?.(i)}
+            style={({ pressed }) => [
+              styles.row,
+              i === active && styles.rowOn,
+              pressed && { backgroundColor: c.a200 },
+            ]}
+          >
+            <View style={[styles.badge, i === active && styles.badgeOn]}>
+              <Text style={styles.badgeText}>{it.badge}</Text>
+            </View>
+            <Text style={styles.title} numberOfLines={1}>
+              {it.label}
+            </Text>
+            {i === active ? <Text style={styles.enter}>↵</Text> : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

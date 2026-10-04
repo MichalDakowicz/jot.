@@ -34,6 +34,7 @@ import {
   type BlockKind,
 } from '../../../lib/doc';
 import { mdOf, plainFor, replaceRuns, runsOf } from '../../../lib/field';
+import { stepPick } from '../../../lib/menu';
 import { pasteInto } from '../../../lib/paste';
 import { useFittedDisplaySize } from '../../../lib/fit';
 import { useIsWide } from '../../../lib/layout';
@@ -76,7 +77,8 @@ function blockData(i: number): { dataSet?: { block: string } } {
   return Platform.OS === 'web' ? { dataSet: { block: String(i) } } : {};
 }
 
-type Mention = { start: number; end: number; q: string };
+/** An @ being typed: where it sits, what follows it, and which field it is in. */
+type Mention = { start: number; end: number; q: string; key: string };
 
 export default function Editor() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -99,10 +101,20 @@ export default function Editor() {
   const [active, setActive] = useState<Marks>({});
   /** Which cell of a table block holds the caret. */
   const [cell, setCell] = useState<{ r: number; c: number } | null>(null);
+  /** Where a caret crossing in from above or below wants to land: its column. */
+  const [aim, setAim] = useState<{ x: number; dir: -1 | 1 } | null>(null);
   const [mention, setMention] = useState<Mention | null>(null);
   const [slash, setSlash] = useState<string | null>(null);
   /** Which row of the block menu Return would take. */
   const [pick, setPick] = useState(0);
+  /** Which note of the @ picker Return would link. */
+  const [mentionPick, setMentionPick] = useState(0);
+  /**
+   * A menu Escape closed, by what opened it — the "/" of block 3, or the @ at
+   * offset 12 of it — so it stays shut while that is still being typed, and
+   * comes back once it is gone and typed again.
+   */
+  const hush = useRef<string | null>(null);
   /** Where the caret is on screen, so the menu can sit beside it. */
   const [spot, setSpot] = useState<CaretSpot | null>(null);
   /**
@@ -118,6 +130,8 @@ export default function Editor() {
   const spanRef = useRef<{ from: number; to: number } | null>(null);
   const dropRef = useRef<(() => void) | null>(null);
   const copyRef = useRef<(() => void) | null>(null);
+  /** Escape with a menu open: closes it, and says whether it did. */
+  const escRef = useRef<(() => boolean) | null>(null);
   /** Whether the focused field already holds all of its own text. */
   const wholeBlockRef = useRef<(() => boolean) | null>(null);
   const blockCount = useRef(1);
@@ -137,6 +151,11 @@ export default function Editor() {
     if (Platform.OS !== 'web') return;
     const onKey = (e: KeyboardEvent) => {
       const shortcut = (e.metaKey || e.ctrlKey) && !e.altKey;
+
+      if (e.key === 'Escape' && escRef.current?.()) {
+        e.preventDefault();
+        return;
+      }
 
       // Select all: a browser can only ever reach the end of the block it is
       // in, so the first press takes the block and the next takes the note.
@@ -235,6 +254,7 @@ export default function Editor() {
   function focusBlock(i: number, caret?: number) {
     const to = caret ?? Number.MAX_SAFE_INTEGER;
     setFocus(i);
+    setAim(null);
     sel.current = { start: to, end: to };
     setForced({ start: to, end: to });
     setRanged(false);
@@ -319,15 +339,24 @@ export default function Editor() {
     const rows = cellsOf(blocks[i]);
     const next = r + dir;
     if (next < 0 || next >= rows.length) {
-      // Leaving the table at the top or the bottom.
-      const to = dir < 0 ? i - 1 : i + 1;
-      if (blocks[to]) {
-        setCell(null);
-        focusBlock(to, 0);
-      }
+      // Leaving the table at the top or the bottom, the way any block is left.
+      crossTo(i, dir);
       return;
     }
     focusCell(i, next, c, (rows[next][c] ?? '').length);
+  }
+
+  /** Left off the head of a cell or right off its end: the next cell in reading order. */
+  function cellStep(i: number, r: number, c: number, dir: -1 | 1) {
+    const rows = cellsOf(blocks[i]);
+    const width = rows[0].length;
+    const at = r * width + c + dir;
+    if (at < 0 || at >= rows.length * width) {
+      crossTo(i, dir, { sideways: true });
+      return;
+    }
+    const to = { r: Math.floor(at / width), c: at % width };
+    focusCell(i, to.r, to.c, dir < 0 ? plainFor(rows[to.r][to.c] ?? '', mentionTitles).length : 0);
   }
 
   /** The whole table goes, and a paragraph takes its place. */
@@ -375,19 +404,30 @@ export default function Editor() {
     setForced({ start: sel.current.start, end: sel.current.end });
   }
 
-  /** Up or down off the edge of a block: the caret carries on in the next one. */
-  function crossTo(i: number, dir: -1 | 1) {
+  /**
+   * Off the edge of a block: the caret carries on in the next one. Up and down
+   * bring the caret's column (`x`) to land under; left and right (`sideways`)
+   * land at the near end, and into a table from below that is its last cell.
+   */
+  function crossTo(i: number, dir: -1 | 1, how: { x?: number; sideways?: boolean } = {}) {
     const to = i + dir;
     const target = blocks[to];
     if (!target) return;
     setSpan(null);
-    setCell(target.kind === 'table' ? { r: dir < 0 ? Math.max(0, (target.rows?.length ?? 1) - 1) : 0, c: 0 } : null);
+    if (target.kind === 'table') {
+      const rows = cellsOf(target);
+      const c = how.sideways && dir < 0 ? rows[0].length - 1 : 0;
+      setCell({ r: dir < 0 ? rows.length - 1 : 0, c });
+    } else {
+      setCell(null);
+    }
     if (target.kind === 'rule') {
       // Nothing to type in, so carry straight on.
-      crossTo(to, dir);
+      crossTo(to, dir, how);
       return;
     }
     focusBlock(to, dir < 0 ? undefined : 0);
+    if (how.x !== undefined && target.kind !== 'table') setAim({ x: how.x, dir });
   }
 
   /** Shift with up or down: grow the block selection. */
@@ -474,27 +514,50 @@ export default function Editor() {
       return;
     }
 
-    const q = slashQuery(plain);
+    const typed = slashQuery(plain);
+    const found = typed === null ? mentionAt(plain, caret, String(i)) : null;
+    if (hush.current !== (typed !== null ? `/${i}` : found?.key)) hush.current = null;
+
+    const q = hush.current === `/${i}` ? null : typed;
     if (q !== slash) setPick(0);
     setSlash(q);
-
-    const before = plain.slice(0, caret);
-    const m = /@([A-Za-z0-9'’: -]{0,30})$/.exec(before);
-    setMention(
-      m && !/ {2}$/.test(m[1]) && q === null ? { start: m.index, end: caret, q: m[1].trim() } : null,
-    );
+    showMention(found);
   }
 
   /** A cell is plain rich text: no block markers, but @ still links a note. */
-  function onCellContext(plain: string, caret: number) {
+  function onCellContext(plain: string, caret: number, where: string) {
     setSlash(null);
+    const found = mentionAt(plain, caret, where);
+    if (hush.current !== found?.key) hush.current = null;
+    showMention(found);
+  }
+
+  /** The @ being typed just behind the caret in the field `where`, if any. */
+  function mentionAt(plain: string, caret: number, where: string): Mention | null {
     const m = /@([A-Za-z0-9'’: -]{0,30})$/.exec(plain.slice(0, caret));
-    setMention(m && !/ {2}$/.test(m[1]) ? { start: m.index, end: caret, q: m[1].trim() } : null);
+    if (!m || / {2}$/.test(m[1])) return null;
+    return { start: m.index, end: caret, q: m[1].trim(), key: `@${where}:${m.index}` };
+  }
+
+  /** Open the @ picker on `next`, unless Escape closed that one. */
+  function showMention(next: Mention | null) {
+    const shown = next && hush.current !== next.key ? next : null;
+    if (shown?.key !== mention?.key || shown?.q !== mention?.q) setMentionPick(0);
+    setMention(shown);
+  }
+
+  /** Return with the @ picker open links the highlighted note. */
+  function takeMention(): boolean {
+    if (!mention || !hits.length) return false;
+    pickMention(hits[Math.min(mentionPick, hits.length - 1)].id);
+    return true;
   }
 
   /** Return splits the block, and a list or quote carries onto the new one. */
   function onEnter(head: string, tail: string, i: number) {
     const block = blocks[i];
+
+    if (takeMention()) return;
 
     // With the block menu open, Return takes the highlighted row instead.
     if (slash !== null) {
@@ -573,6 +636,35 @@ export default function Editor() {
     }
     next.splice(i - 1, 2, { ...prev, text: prev.text + block.text });
     write(next, i - 1);
+  }
+
+  /**
+   * Delete at the end of a block brings the one below up into it, the caret
+   * staying at the join. A divider below just goes; a table or a code block is
+   * left alone, unless this block is empty, and then it is this block that goes.
+   */
+  function onDeleteAtEnd(i: number) {
+    const block = blocks[i];
+    const below = blocks[i + 1];
+    if (!below) return;
+    const join = plainFor(block.text, mentionTitles).length;
+    const next = [...blocks];
+
+    if (below.kind === 'rule') {
+      next.splice(i + 1, 1);
+      write(next, i, join);
+      return;
+    }
+    if (!join && block.kind === 'p') {
+      next.splice(i, 1);
+      setCell(below.kind === 'table' ? { r: 0, c: 0 } : null);
+      write(next, i, 0);
+      return;
+    }
+    if (below.kind === 'table' || below.kind === 'fence') return;
+
+    next.splice(i, 2, { ...block, text: block.text + below.text });
+    write(next, i, join);
   }
 
   /** Code is typed as-is: no annotations, no markers, Return stays a newline. */
@@ -688,6 +780,19 @@ export default function Editor() {
 
   dropRef.current = dropSpan;
   copyRef.current = copySpan;
+  escRef.current = () => {
+    if (slash !== null && focus !== null) {
+      hush.current = `/${focus}`;
+      setSlash(null);
+      return true;
+    }
+    if (mention) {
+      hush.current = mention.key;
+      setMention(null);
+      return true;
+    }
+    return false;
+  };
   blockCount.current = blocks.length;
   // An empty block counts as held: there is nothing in it left to take.
   wholeBlockRef.current = () => {
@@ -797,7 +902,9 @@ export default function Editor() {
                                   onChangeText={(md) => writeCell(i, r, ci, md)}
                                   // No block markers inside a cell: "## " there is
                                   // text, not a heading. @ still links a note.
-                                  onContext={(plain, caret) => onCellContext(plain, caret)}
+                                  onContext={(plain, caret) =>
+                                    onCellContext(plain, caret, `${i}.${r}.${ci}`)
+                                  }
                                   onSelection={(range, marks) => {
                                     if (!here(r, ci)) setCell({ r, c: ci });
                                     if (focus !== i) setFocus(i);
@@ -805,10 +912,19 @@ export default function Editor() {
                                     setRanged(range.end > range.start);
                                     setActive(marks);
                                   }}
-                                  onEnter={() => cellDown(i, r, ci)}
+                                  onEnter={() => {
+                                    if (!takeMention()) cellDown(i, r, ci);
+                                  }}
                                   blockId={String(i)}
                                   onTab={(back) => cellTab(i, r, ci, back)}
-                                  onArrow={(dir) => cellArrow(i, r, ci, dir)}
+                                  onArrow={(dir) => {
+                                    if (mention && hits.length) {
+                                      setMentionPick((p) => stepPick(p, dir, hits.length));
+                                    } else {
+                                      cellArrow(i, r, ci, dir);
+                                    }
+                                  }}
+                                  onStep={(dir) => cellStep(i, r, ci, dir)}
                                   onBackspaceAtStart={() => {
                                     // Backspace at the head of the first cell drops
                                     // an empty table; elsewhere it steps back a cell.
@@ -963,17 +1079,19 @@ export default function Editor() {
                     nest(i, back);
                     return true;
                   }}
-                  onCross={(dir) => crossTo(i, dir)}
+                  onCross={(dir, x) => crossTo(i, dir, { x })}
+                  onStep={(dir) => crossTo(i, dir, { sideways: true })}
+                  onDeleteAtEnd={() => onDeleteAtEnd(i)}
+                  aim={focus === i ? aim : null}
                   onSelectAcross={(dir) => growSpan(i, dir)}
-                  // Arrows only belong to the editor while the menu is open;
-                  // otherwise they are the caret's own.
+                  // Arrows only belong to the editor while a menu is open, and
+                  // walk all of it; otherwise they are the caret's own.
                   onArrow={
                     slash !== null
-                      ? (dir) => {
-                          const count = Math.min(slashHits(slash).length, 5);
-                          setPick((p) => (count ? (p + dir + count) % count : 0));
-                        }
-                      : undefined
+                      ? (dir) => setPick((p) => stepPick(p, dir, slashHits(slash).length))
+                      : mention && hits.length
+                        ? (dir) => setMentionPick((p) => stepPick(p, dir, hits.length))
+                        : undefined
                   }
                 />
               </View>
@@ -1062,11 +1180,18 @@ export default function Editor() {
           bottom={panelBottom}
           at={spot}
           active={pick}
+          onHover={setPick}
         />
       ) : ranged ? (
         <MarkBar onMark={applyMark} bottom={panelBottom} active={active} />
       ) : (
-        <MentionPicker hits={hits} onPick={pickMention} bottom={panelBottom} />
+        <MentionPicker
+          hits={hits}
+          onPick={pickMention}
+          bottom={panelBottom}
+          active={Math.min(mentionPick, hits.length - 1)}
+          onHover={setMentionPick}
+        />
       )}
     </View>
   );

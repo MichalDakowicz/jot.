@@ -5,24 +5,39 @@ import { c, f, shadow } from '../theme/tokens';
 
 export type MentionHit = { id: string; title: string; nbName: string; tint: string };
 
+/**
+ * The notes an @ can link. The highlighted row is the one Return takes, and
+ * the arrows walk it, the way they walk the slash list.
+ */
 export function MentionPicker({
   hits,
   onPick,
   bottom,
+  active = 0,
+  onHover,
 }: {
   hits: MentionHit[];
   onPick: (id: string) => void;
   bottom: number;
+  /** Which row Return would take. */
+  active?: number;
+  /** The pointer is over a row: it becomes the one Return takes. */
+  onHover?: (index: number) => void;
 }) {
   if (!hits.length) return null;
   return (
     <View style={[styles.panel, { bottom }]}>
       <Text style={styles.label}>Link a note</Text>
-      {hits.map((h) => (
+      {hits.map((h, i) => (
         <Pressable
           key={h.id}
           onPress={() => onPick(h.id)}
-          style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.g100 }]}
+          onHoverIn={() => onHover?.(i)}
+          style={({ pressed }) => [
+            styles.row,
+            i === active && styles.rowOn,
+            pressed && { backgroundColor: c.g200 },
+          ]}
         >
           <View style={[styles.dot, { backgroundColor: h.tint }]} />
           <Text style={styles.title} numberOfLines={1}>
@@ -31,6 +46,7 @@ export function MentionPicker({
           <Text style={styles.nb} numberOfLines={1}>
             {h.nbName}
           </Text>
+          {i === active ? <Text style={styles.enter}>↵</Text> : null}
         </Pressable>
       ))}
     </View>
@@ -60,7 +76,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, padding: 12 },
+  rowOn: { backgroundColor: c.g100 },
   dot: { width: 9, height: 9, borderRadius: 99 },
   title: { flex: 1, fontFamily: f.b700, fontSize: 14, color: c.text },
   nb: { fontFamily: f.b600, fontSize: 11, color: c.n500, maxWidth: 110 },
+  enter: { fontFamily: f.b700, fontSize: 13, color: c.g600, paddingRight: 2 },
 });

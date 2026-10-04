@@ -8,7 +8,8 @@ import React, {
 } from 'react';
 import { StyleSheet, type TextStyle } from 'react-native';
 
-import { putCaret, readRange } from '../lib/caret';
+import { offsetNearX, putCaret, readRange } from '../lib/caret';
+import { barRange } from '../lib/field';
 import type { Marks, Run } from '../lib/rich';
 import { tabText } from '../lib/typing';
 import { c, f } from '../theme/tokens';
@@ -48,6 +49,9 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
     onArrow,
     onCaretSpot,
     onCross,
+    onStep,
+    onDeleteAtEnd,
+    aim,
     onSelectAcross,
     onPasteText,
     blockId,
@@ -58,6 +62,10 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
   const host = useRef<HTMLDivElement | null>(null);
   /** Where the caret belongs once the runs have been redrawn. */
   const want = useRef<number | null>(null);
+  /** Where that selection ends, when it is a selection and not a caret. */
+  const wantEnd = useRef<number | null>(null);
+  /** The last selection seen inside this block, for a bar press that moves it. */
+  const kept = useRef<{ start: number; end: number } | null>(null);
   /** The markup this component last wrote, so it writes only on a real change. */
   const written = useRef<string | null>(null);
   /** The caret request already honoured, so each one is honoured once. */
@@ -99,8 +107,14 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
 
   useImperativeHandle(ref, () => ({
     toggleMark(kind, value) {
-      const range = readSelection() ?? { start: plain.length, end: plain.length };
+      // Pressing the bar can move the selection out of the block, and the
+      // focus with it: the selection last seen in here is the one meant, and
+      // it comes back afterwards so a second mark can go on the same words.
+      const range = barRange(readSelection(), kept.current, plain.length);
       want.current = range.start;
+      wantEnd.current = range.end;
+      const root = host.current;
+      if (root && root.ownerDocument.activeElement !== root) root.focus({ preventScroll: true });
       block.toggle(range.start, range.end, kind, value ?? true);
     },
     replaceMention(start, end, title) {
@@ -141,8 +155,10 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
     if (!focused) return;
     const at = want.current ?? asked?.start ?? null;
     if (at === null) return;
+    const end = wantEnd.current ?? asked?.end ?? at;
     want.current = null;
-    place(Math.min(at, plain.length), Math.min(asked?.end ?? at, plain.length));
+    wantEnd.current = null;
+    place(Math.min(at, plain.length), Math.min(end, plain.length));
     reportSpot();
   });
 
@@ -152,6 +168,7 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
       if (!root || root.ownerDocument.activeElement !== root) return;
       const range = readSelection();
       if (!range) return;
+      kept.current = range;
       block.moved(range.start);
       onSelection(range, block.marks(range.start, range.end));
       reportSpot();
@@ -168,6 +185,13 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
     const root = host.current;
     if (!root) return;
     if (root.ownerDocument.activeElement !== root) root.focus();
+    // Crossing in from above or below keeps the column the caret had there.
+    const aimed = aim ? offsetNearX(root, aim.x, aim.dir) : null;
+    if (aimed !== null) {
+      want.current = null;
+      place(aimed, aimed);
+      return;
+    }
     const at = Math.min(want.current ?? selection?.start ?? plain.length, plain.length);
     want.current = null;
     place(at, Math.min(selection?.end ?? at, plain.length));
@@ -179,7 +203,8 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
     if (!root) return;
     // A contenteditable hands back U+00A0 for a space it thinks is trailing.
     const next = (root.textContent ?? '').replace(NBSP, ' ');
-    const typed = block.type(next);
+    // The browser has already put the caret after what went in.
+    const typed = block.type(next, readRange(root)?.start);
     want.current = typed.caret;
     onContext(typed.plain, typed.caret);
   }
@@ -191,14 +216,20 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
    */
   function onEdgeLine(dir: -1 | 1): boolean {
     const root = host.current;
-    const sel = window.getSelection();
-    if (!root || !sel || sel.rangeCount === 0) return true;
-    const r = sel.getRangeAt(0);
-    const rect = typeof r.getBoundingClientRect === 'function' ? r.getBoundingClientRect() : null;
-    if (!rect || !rect.height) return true;
+    const rect = caretRect();
+    if (!root || !rect) return true;
     const box = root.getBoundingClientRect();
     const slack = rect.height * 0.6;
     return dir < 0 ? rect.top - box.top < slack : box.bottom - rect.bottom < slack;
+  }
+
+  /** The caret as drawn, or null where it measures as nothing. */
+  function caretRect(): DOMRect | null {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const r = sel.getRangeAt(0);
+    const rect = typeof r.getBoundingClientRect === 'function' ? r.getBoundingClientRect() : null;
+    return rect && rect.height ? rect : null;
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -221,7 +252,7 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
       const at = range ?? { start: plain.length, end: plain.length };
       const put = tabText(plain, at.start, at.end, e.shiftKey);
       if (!put) return;
-      const typed = block.type(put.text);
+      const typed = block.type(put.text, put.caret);
       want.current = typed.caret;
       onContext(typed.plain, typed.caret);
       return;
@@ -243,10 +274,24 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
         onSelectAcross(dir);
         return;
       }
-      // Otherwise the caret walks the lines, and steps out at the edge.
+      // Otherwise the caret walks the lines, and steps out at the edge, taking
+      // its column with it.
       if (!e.shiftKey && onCross && onEdgeLine(dir)) {
         e.preventDefault();
-        onCross(dir);
+        onCross(dir, caretRect()?.left);
+        return;
+      }
+    }
+
+    // Left off the head of the block, or right off its end, carries on into the
+    // next one rather than stopping dead. Word and line jumps too: at an edge
+    // there is nothing left in this block for them to jump over.
+    const caretOnly = !!range && range.start === range.end;
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.shiftKey && onStep && caretOnly) {
+      const dir = e.key === 'ArrowRight' ? 1 : -1;
+      if (dir < 0 ? range.start === 0 : range.start === plain.length) {
+        e.preventDefault();
+        onStep(dir);
         return;
       }
     }
@@ -257,11 +302,18 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
       return;
     }
 
+    if (e.key === 'Delete' && onDeleteAtEnd && caretOnly && range.start === plain.length) {
+      e.preventDefault();
+      onDeleteAtEnd();
+      return;
+    }
+
     // The keyboard shortcuts Notion offers alongside the markdown ones.
     const kind = (e.ctrlKey || e.metaKey) && !e.altKey ? KEYS[e.key.toLowerCase()] : undefined;
     if (kind && range) {
       e.preventDefault();
       want.current = range.start;
+      wantEnd.current = range.end;
       block.toggle(range.start, range.end, kind);
     }
   }

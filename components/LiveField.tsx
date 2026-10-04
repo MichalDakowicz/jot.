@@ -9,6 +9,7 @@ import {
   type TextStyle,
 } from 'react-native';
 
+import { barRange } from '../lib/field';
 import { editOf, tabText } from '../lib/typing';
 import { useLiveBlock } from './useLiveBlock';
 import type { Marks } from '../lib/rich';
@@ -61,9 +62,19 @@ export type LiveFieldProps = {
   onCaretSpot?: (spot: { x: number; y: number; height: number } | null) => void;
   /**
    * Up or down pressed on the first or last line of the block: the caret is
-   * leaving, so the editor moves it to the block above or below.
+   * leaving, so the editor moves it to the block above or below. `x` is where
+   * the caret was drawn, when it could be measured, so the column carries over.
    */
-  onCross?: (dir: -1 | 1) => void;
+  onCross?: (dir: -1 | 1, x?: number) => void;
+  /** Left off the head of the block, or right off its end. */
+  onStep?: (dir: -1 | 1) => void;
+  /** Delete at the end of the block: the one below comes up into it. */
+  onDeleteAtEnd?: () => void;
+  /**
+   * The caret arriving from the block above (`dir` 1) or below (-1): it lands
+   * on the near line as close under `x` as that line reaches. Web only.
+   */
+  aim?: { x: number; dir: -1 | 1 } | null;
   /** Shift with up or down: the selection is growing past this block. */
   onSelectAcross?: (dir: -1 | 1) => void;
   /** Marks this field's element, so a selection can be traced back to a block. */
@@ -105,6 +116,8 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
   const block = useLiveBlock(text, mentions, onChangeText);
   const shown = useRef(block.plain);
   const caret = useRef(0);
+  /** The far end of the selection, which a keystroke replaces along with it. */
+  const caretEnd = useRef(0);
   const [generation, setGeneration] = useState(0);
   const box = useRef<TextInput | null>(null);
   /**
@@ -129,10 +142,14 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
 
   useImperativeHandle(ref, () => ({
     toggleMark(kind, value) {
-      block.toggle(caret.current, caret.current, kind, value ?? true);
+      // The whole selection, not the caret at its head: from one offset to the
+      // same one is nothing, and the bar did nothing.
+      const range = barRange({ start: caret.current, end: caretEnd.current }, null, block.plain.length);
+      block.toggle(range.start, range.end, kind, value ?? true);
     },
     replaceMention(start, end, title) {
       caret.current = block.mention(start, end, title);
+      caretEnd.current = caret.current;
       setHeld({ start: caret.current, end: caret.current });
     },
   }));
@@ -165,15 +182,20 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
       const pasted = block.paste(edit.start, edit.end, edit.put);
       shown.current = pasted.plain;
       caret.current = pasted.caret;
+      caretEnd.current = pasted.caret;
       setHeld({ start: pasted.caret, end: pasted.caret });
       onContext(pasted.plain, pasted.caret);
       report();
       return;
     }
 
-    const typed = block.type(next);
+    // `onChangeText` comes before `onSelectionChange`, so the caret held is the
+    // one from before the key: whatever was selected went, and the change ends
+    // that far past the selection's far end.
+    const typed = block.type(next, caretEnd.current + next.length - shown.current.length);
     shown.current = typed.plain;
     caret.current = typed.caret;
+    caretEnd.current = typed.caret;
     setHeld({ start: typed.caret, end: typed.caret });
     onContext(typed.plain, typed.caret);
     report();
@@ -192,9 +214,10 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
       if (onTab?.(false)) return;
       const put = tabText(block.plain, caret.current, caret.current, false);
       if (!put) return;
-      const typed = block.type(put.text);
+      const typed = block.type(put.text, put.caret);
       shown.current = typed.plain;
       caret.current = typed.caret;
+      caretEnd.current = typed.caret;
       setHeld({ start: typed.caret, end: typed.caret });
       onContext(typed.plain, typed.caret);
       return;
@@ -215,6 +238,7 @@ export const LiveField = forwardRef<LiveFieldHandle, LiveFieldProps>(function Li
         const now = e.nativeEvent.selection;
         block.moved(now.start);
         caret.current = now.start;
+        caretEnd.current = now.end;
         setHeld(now);
         onSelection(now, block.marks(now.start, now.end));
       }}

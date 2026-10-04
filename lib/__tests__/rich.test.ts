@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { pasteRuns } from '../field';
-import { parseRuns, serializeRuns, type Run } from '../rich';
+import { barRange, pasteRuns, toggleRuns, typeInto } from '../field';
+import { parseRuns, serializeRuns, type Pending, type Run } from '../rich';
 
 const NO_MENTIONS: string[] = [];
 
@@ -109,5 +109,82 @@ describe('pasteRuns', () => {
 
     expect(put.plain).toBe('code*em*');
     expect(shape(put.runs)).toEqual(['code*em*{code}']);
+  });
+});
+
+describe('typeInto', () => {
+  /** Type `text` at `at`, one key at a time, the caret moving on as it goes. */
+  function typeAt(runs: Run[], at: number, text: string) {
+    let now = { runs, plain: runs.map((r) => r.text).join(''), caret: at, pending: null as Pending };
+    for (const ch of text) {
+      const next = now.plain.slice(0, now.caret) + ch + now.plain.slice(now.caret);
+      now = typeInto(now.runs, next, now.pending, now.caret + 1);
+    }
+    return now;
+  }
+
+  it('keeps the caret behind a letter typed in front of the same letter', () => {
+    const typed = typeAt(parseRuns('I like apples'), 7, 'an ');
+
+    expect(typed.plain).toBe('I like an apples');
+    expect(typed.caret).toBe(10);
+  });
+
+  it('keeps the caret behind a space typed in front of a space', () => {
+    const typed = typeAt(parseRuns('one two'), 3, ' and');
+
+    expect(typed.plain).toBe('one and two');
+    expect(typed.caret).toBe(7);
+  });
+
+  it('gives a letter typed at the head of a run the marks of where it was typed', () => {
+    // "a" then a bold "a": typed between them, the new letter is plain.
+    const typed = typeInto(parseRuns('a**ab**'), 'aaab', null, 2);
+
+    expect(shape(typed.runs)).toEqual(['aa{}', 'ab{bold}']);
+  });
+
+  it('takes out the letter the caret was behind, not its twin', () => {
+    // Backspace behind the bold "a" of "**a**a" takes the bold one.
+    const typed = typeInto(parseRuns('**a**a'), 'a', null, 0);
+
+    expect(shape(typed.runs)).toEqual(['a{}']);
+  });
+
+  it('falls back to reading the change off the text when the caret does not fit it', () => {
+    const typed = typeInto(parseRuns('abc'), 'abxc', null, 0);
+
+    expect(typed.plain).toBe('abxc');
+    expect(typed.caret).toBe(3);
+  });
+});
+
+describe('barRange', () => {
+  it('takes the whole selection, not the caret at its head', () => {
+    const range = barRange({ start: 4, end: 9 }, null, 20);
+
+    expect(range).toEqual({ start: 4, end: 9 });
+    expect(shape(toggleRuns(parseRuns('the quick fox'), range.start, range.end, 'bold'))).toEqual([
+      'the {}',
+      'quick{bold}',
+      ' fox{}',
+    ]);
+  });
+
+  it('falls back to the last selection seen in the block when the press moved it away', () => {
+    expect(barRange(null, { start: 2, end: 5 }, 20)).toEqual({ start: 2, end: 5 });
+  });
+
+  it('prefers a live selection over the one kept', () => {
+    expect(barRange({ start: 6, end: 8 }, { start: 2, end: 5 }, 20)).toEqual({ start: 6, end: 8 });
+  });
+
+  it('turns a selection made backwards round and keeps it inside the block', () => {
+    expect(barRange({ start: 9, end: 4 }, null, 20)).toEqual({ start: 4, end: 9 });
+    expect(barRange({ start: 4, end: 30 }, null, 12)).toEqual({ start: 4, end: 12 });
+  });
+
+  it('is the end of the block, a no-op, with nothing selected anywhere', () => {
+    expect(barRange(null, null, 7)).toEqual({ start: 7, end: 7 });
   });
 });

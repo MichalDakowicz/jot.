@@ -286,25 +286,48 @@ export function toggleMarkRange(
  * Rebuild the runs after the field's plain text changed, keeping annotations on
  * the text that stayed. Typed text inherits the marks to its left, the way an
  * editor is expected to behave.
+ *
+ * `caret` is where the caret sits in `next` once the change is in, when the
+ * field knows. The two strings alone cannot say where a letter went in front of
+ * its twin: "apples" to "aapples" reads as an "a" after the first one, which put
+ * the caret one past where it was typed and the next key behind the twin —
+ * "an" typed there came out as "aan". With the caret, the change ends where the
+ * caret is. A caret that does not fit the two strings is ignored.
  */
 export function applyPlainEdit(
   runs: Run[],
   next: string,
   pending?: Pending,
+  caret?: number,
 ): { runs: Run[]; caret: number } {
   const prev = plainOf(runs);
   if (prev === next) return { runs, caret: prev.length };
 
-  let head = 0;
-  while (head < prev.length && head < next.length && prev[head] === next[head]) head += 1;
+  const fits =
+    caret !== undefined &&
+    caret >= 0 &&
+    caret <= next.length &&
+    next.length - caret <= prev.length &&
+    prev.endsWith(next.slice(caret));
 
   let tail = 0;
-  while (
-    tail < prev.length - head &&
-    tail < next.length - head &&
-    prev[prev.length - 1 - tail] === next[next.length - 1 - tail]
-  ) {
-    tail += 1;
+  let headLimit = Math.min(prev.length, next.length);
+  if (fits) {
+    tail = next.length - caret;
+    headLimit = Math.min(caret, prev.length - tail);
+  }
+
+  let head = 0;
+  while (head < headLimit && prev[head] === next[head]) head += 1;
+
+  if (!fits) {
+    while (
+      tail < prev.length - head &&
+      tail < next.length - head &&
+      prev[prev.length - 1 - tail] === next[next.length - 1 - tail]
+    ) {
+      tail += 1;
+    }
   }
 
   const inserted = next.slice(head, next.length - tail);

@@ -51,9 +51,12 @@ export function useLiveBlock(md: string, mentions: string[], emit: (md: string) 
       return runs.current.map((r) => r.text).join('');
     },
 
-    /** The field's text changed; returns where the caret should sit. */
-    type(nextPlain: string): { plain: string; caret: number } {
-      const typed = typeInto(runs.current, nextPlain, pending.current);
+    /**
+     * The field's text changed; returns where the caret should sit. `caret` is
+     * the field's own caret in `nextPlain`, when it has one to give.
+     */
+    type(nextPlain: string, caret?: number): { plain: string; caret: number } {
+      const typed = typeInto(runs.current, nextPlain, pending.current, caret);
       pending.current = typed.pending;
       push(typed.runs);
       return { plain: typed.plain, caret: typed.caret };

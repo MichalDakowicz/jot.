@@ -43,17 +43,20 @@ export function plainFor(md: string, mentions: string[]): string {
 /**
  * The field's plain text changed. Reannotate what stayed, polish the typing,
  * then give the live shortcut a chance to close a pair at the caret.
+ *
+ * `at` is where the field's caret sits in `nextPlain`, when it knows: it is
+ * what says where a letter typed in front of its twin went.
  */
-export function typeInto(runs: Run[], nextPlain: string, pending: Pending): Typed {
+export function typeInto(runs: Run[], nextPlain: string, pending: Pending, at?: number): Typed {
   const before = plainOf(runs);
-  let edit = applyPlainEdit(runs, nextPlain, pending ?? undefined);
+  let edit = applyPlainEdit(runs, nextPlain, pending ?? undefined, at);
 
   // Arrow, dash, ellipsis and quote polish, on text that just grew — but not
   // inside code, where "->" is an operator and has to stay as typed.
   if (nextPlain.length > before.length && !marksBefore(edit.runs, edit.caret).code) {
     const polished = typography(nextPlain, edit.caret);
     if (polished.text !== nextPlain) {
-      edit = applyPlainEdit(runs, polished.text, pending ?? undefined);
+      edit = applyPlainEdit(runs, polished.text, pending ?? undefined, polished.caret);
     }
   }
 
@@ -105,6 +108,20 @@ export function splitRuns(runs: Run[], caret: number, end = caret): { head: stri
     head: serializeRuns(sliceRuns(runs, 0, caret)),
     tail: serializeRuns(sliceRuns(runs, Math.max(caret, end), plain.length)),
   };
+}
+
+export type Span = { start: number; end: number };
+
+/**
+ * The stretch the selection bar acts on. A press on the bar can take the live
+ * selection out of the block, so the last one seen inside it stands in; with
+ * neither, it is the end of the block, where a toggle does nothing.
+ */
+export function barRange(live: Span | null, kept: Span | null, length: number): Span {
+  const got = live && live.end !== live.start ? live : (kept ?? live);
+  if (!got) return { start: length, end: length };
+  const clamp = (n: number) => Math.max(0, Math.min(n, length));
+  return { start: clamp(Math.min(got.start, got.end)), end: clamp(Math.max(got.start, got.end)) };
 }
 
 /** The selection bar, and Ctrl+B and friends. */
