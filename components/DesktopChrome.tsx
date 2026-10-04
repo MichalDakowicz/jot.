@@ -17,11 +17,13 @@ import { Blob } from './Blob';
 import { LogoMark } from './Logo';
 import { Icon, type IconName } from './Icon';
 import { initialsOf, useAuth } from '../lib/auth';
+import { notebookInPath, openingNotebook, stillThere } from '../lib/shelf';
 import { useStore } from '../lib/store';
 import { relative } from '../lib/time';
 import { c, f, NAV_OFF, NAV_ON, shadow, tintOf } from '../theme/tokens';
 
 const SHELF_KEY = 'jot.shelf';
+const NOTEBOOK_KEY = 'jot.notebook';
 const SHELF_W = 244;
 const HANDLE = 18;
 
@@ -81,8 +83,45 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
   const { notebooks, notes, tagCounts, search, notebookById, createNote } = useStore();
   const { profile, user, avatarUrl } = useAuth();
 
-  const [nbFilter, setNbFilter] = useState<string | null>(null);
+  const [nbFilter, setNbFilter] = useState<string | null>(() => notebookInPath(pathname));
   const [q, setQ] = useState('');
+
+  /** The notebook the list is filtered to. Remembered, so a reload keeps it. */
+  function pickNotebook(id: string | null) {
+    setNbFilter(id);
+    void (id ? AsyncStorage.setItem(NOTEBOOK_KEY, id) : AsyncStorage.removeItem(NOTEBOOK_KEY)).catch(
+      () => undefined,
+    );
+  }
+
+  useEffect(() => {
+    let alive = true;
+    AsyncStorage.getItem(NOTEBOOK_KEY)
+      .then((raw) => {
+        if (alive) setNbFilter(openingNotebook(pathname, raw));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+    // Read once, on the way in; the address only matters for the first answer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A notebook's own page names the notebook, however it was reached.
+  const inPath = notebookInPath(pathname);
+  useEffect(() => {
+    if (inPath) pickNotebook(inPath);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inPath]);
+
+  // A notebook deleted since it was picked takes the filter with it.
+  const known = notebooks.map((nb) => nb.id);
+  const kept = stillThere(nbFilter, known);
+  useEffect(() => {
+    if (kept !== nbFilter) pickNotebook(kept);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kept, nbFilter]);
 
   /**
    * One switch, two states: the note list on its own, or the shelf beside it.
@@ -154,7 +193,7 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
       label: 'Today',
       on: segment === 'today',
       go: () => {
-        setNbFilter(null);
+        pickNotebook(null);
         router.replace('/today');
       },
     },
@@ -264,7 +303,7 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
         </View>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 5 }}>
           <Pressable
-            onPress={() => setNbFilter(null)}
+            onPress={() => pickNotebook(null)}
             style={[styles.nbRow, !nbFilter && { backgroundColor: c.paper }]}
           >
             <Blob size={11} color={c.n400} />
@@ -279,7 +318,7 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
               <Pressable
                 key={nb.id}
                 onPress={() => {
-                  setNbFilter(nb.id);
+                  pickNotebook(nb.id);
                   router.replace(`/notebook/${nb.id}`);
                 }}
                 style={[styles.nbRow, nbFilter === nb.id && { backgroundColor: c.paper }]}
@@ -305,7 +344,7 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
                 key={t.name}
                 onPress={() => {
                   setQ('#' + t.name);
-                  setNbFilter(null);
+                  pickNotebook(null);
                 }}
                 style={styles.tag}
               >
