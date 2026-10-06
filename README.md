@@ -2,7 +2,7 @@
 
 A React Native (Expo) build of the *Class Notes* design canvas: a notebook per
 subject, markdown that sets itself as you leave a line, `@` mentions that become
-two-way links, `#tags` you can travel through, and a link map of the whole
+two-way links, tags you can travel through, and a link map of the whole
 thing. Login, notes and files all live in Supabase.
 
 ## What it does
@@ -15,7 +15,7 @@ thing. Login, notes and files all live in Supabase.
 | Notebooks | `/shelf` | Notebook grid, link-map and tag shortcuts, notebook creation |
 | A notebook | `/notebook/[id]` | Its notes with tags, and notebook deletion |
 | A note | `/note/[id]` | Rendered markdown on dotted paper, tags, forward and back links |
-| Editor | `/editor/[id]` | Line-by-line source editing, Enter splits, Backspace merges, `@` picker |
+| Editor | `/editor/[id]` | Line-by-line source editing, Enter splits, Backspace merges, `@` picker, the notebook and tag row under the title |
 | Search | `/search` | Free text or `#tag` search across every note |
 | Tags | `/tags` | Tag cloud sized by use, plus the notes under the selected tag |
 | Link map | `/graph` | One cluster per notebook, an edge for every `@` mention |
@@ -127,8 +127,14 @@ scripts/
 Notes are edited locally and pushed to Supabase on a 700 ms debounce, so typing
 never waits for the network; leaving the editor flushes anything pending.
 
-Tags and links are derived from the note body itself — `#tag` and `@Note title`
-— exactly as in the design, so there is no separate join table to keep in sync.
+Changes made anywhere else — the website, another phone — arrive over Supabase
+Realtime while the app is open, and the app reads everything again when it
+comes back from the background. A note with an edit of its own still on the
+way keeps that edit rather than the server's older copy.
+
+Links are derived from the note body itself — `@Note title` — so there is no
+join table to keep in sync. Tags are not: they sit in `notes.tags` and are set
+in the row under a note's title, so a `#` in the text is just a character.
 
 ## Scripts
 

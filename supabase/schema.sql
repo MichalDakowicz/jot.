@@ -19,10 +19,15 @@ create table if not exists public.notebooks (
   name text not null,
   code text not null default '',
   prof text not null default '',
-  tint smallint not null default 0 check (tint between 0 and 4),
+  tint smallint not null default 0 check (tint between 0 and 11),
   position smallint not null default 0,
   created_at timestamptz not null default now()
 );
+
+-- One index per colour way in theme/tokens.ts TINTS. A database made when
+-- there were five still holds the old check, which refuses every newer colour.
+alter table public.notebooks drop constraint if exists notebooks_tint_check;
+alter table public.notebooks add constraint notebooks_tint_check check (tint between 0 and 11);
 
 create table if not exists public.notes (
   id uuid primary key default gen_random_uuid(),
@@ -30,6 +35,7 @@ create table if not exists public.notes (
   notebook_id uuid not null references public.notebooks (id) on delete cascade,
   title text not null default 'Untitled note',
   body text not null default '',
+  tags text[] not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -69,6 +75,40 @@ drop trigger if exists notes_touch_updated_at on public.notes;
 create trigger notes_touch_updated_at
   before update on public.notes
   for each row execute function public.touch_updated_at();
+
+-- ───────────────────────────────────────── tags out of the note text
+
+-- Tags used to be #words in the body. They are a column now, set in the row
+-- under a note's title. A database from before gets the column once, filled
+-- from the #words already written; the text itself is left as it was. Only
+-- when the column is new, so a tag taken off a note later does not come back
+-- the next time this file is run.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'notes' and column_name = 'tags'
+  ) then
+    return;
+  end if;
+
+  alter table public.notes add column tags text[] not null default '{}';
+
+  -- Filling the column is not an edit: "edited 3 days ago" stays true.
+  alter table public.notes disable trigger notes_touch_updated_at;
+  update public.notes n
+  set tags = coalesce((
+    select array_agg(found.tag order by found.first)
+    from (
+      select lower(m.hit[2]) as tag, min(m.ord) as first
+      from regexp_matches(n.body, '(^|\s)#([a-z0-9-]+)', 'gi') with ordinality as m(hit, ord)
+      group by lower(m.hit[2])
+    ) found
+  ), '{}')
+  where n.body ~* '(^|\s)#[a-z0-9-]+';
+  alter table public.notes enable trigger notes_touch_updated_at;
+end
+$$;
 
 -- ─────────────────────────────────────── a profile row for every signup
 
@@ -116,6 +156,31 @@ create policy "own notes" on public.notes
 drop policy if exists "own classes" on public.class_sessions;
 create policy "own classes" on public.class_sessions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ────────────────────────────────────────────────────────── realtime
+
+-- The app listens for changes to these, so an edit on the website shows up
+-- on an open phone, and the other way round. Row level security above
+-- decides which changes each listener is sent. Deletes are not checked
+-- against it, which is why replica identity stays the default: a delete
+-- carries the row's id and nothing else.
+do $$
+declare
+  t text;
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    return;
+  end if;
+  foreach t in array array['notebooks', 'notes', 'class_sessions'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end
+$$;
 
 -- ─────────────────────────────────────────────────────────── storage
 

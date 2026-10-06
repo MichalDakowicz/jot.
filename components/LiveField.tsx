@@ -274,7 +274,6 @@ export function styleOf(marks: Marks): TextStyle[] {
   if (marks.strike) out.push({ textDecorationLine: 'line-through' });
   if (marks.mark) out.push({ backgroundColor: c.a200, color: c.a900 });
   if (marks.code) out.push({ fontFamily: f.mono, fontSize: 13.5, color: c.a800 });
-  if (marks.tag) out.push({ fontFamily: f.b700, color: c.a700 });
   if (marks.mention) out.push({ fontFamily: f.b600, color: c.g800 });
   if (marks.link) out.push({ fontFamily: f.b600, color: c.a700, textDecorationLine: 'underline' });
   return out;

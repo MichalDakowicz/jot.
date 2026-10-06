@@ -14,6 +14,7 @@ export type SeedNote = {
   nb: string;
   title: string;
   body: string;
+  tags: string[];
   /** Hours in the past, so "edited 2h ago" reads like the design. */
   agoHours: number;
 };
@@ -58,9 +59,8 @@ export const SEED_NOTES: SeedNote[] = [
       '- [ ] Ask Nowak about ==anti-Markovnikov== radical addition',
       '',
       'Stereochemistry of the bromination step is in @Lab 3: fractional distillation, near the bottom.',
-      '',
-      '#mechanisms #exam',
     ),
+    tags: ['mechanisms', 'exam'],
   },
   {
     nb: 'chem',
@@ -77,9 +77,8 @@ export const SEED_NOTES: SeedNote[] = [
       '- Primary cation, effectively never forms',
       '',
       'Worked examples live in @Alkene addition reactions.',
-      '',
-      '#mechanisms',
     ),
+    tags: ['mechanisms'],
   },
   {
     nb: 'chem',
@@ -99,9 +98,8 @@ export const SEED_NOTES: SeedNote[] = [
       '- [ ] Write up percent recovery',
       '',
       'Theory recap in @Alkene addition reactions.',
-      '',
-      '#lab',
     ),
+    tags: ['lab'],
   },
   {
     nb: 'linalg',
@@ -121,9 +119,8 @@ export const SEED_NOTES: SeedNote[] = [
       '',
       '- [ ] Prove that symmetric matrices have real eigenvalues',
       '- [ ] Exam 2019 question 3',
-      '',
-      '#proofs #exam',
     ),
+    tags: ['proofs', 'exam'],
   },
   {
     nb: 'linalg',
@@ -139,9 +136,8 @@ export const SEED_NOTES: SeedNote[] = [
       '- P is invertible because a basis is independent',
       '',
       'This is the machinery behind @Eigenvalues and eigenvectors.',
-      '',
-      '#proofs',
     ),
+    tags: ['proofs'],
   },
   {
     nb: 'hist',
@@ -158,9 +154,8 @@ export const SEED_NOTES: SeedNote[] = [
       '> The order held for a generation, then cracked. See @1848: the springtime of peoples.',
       '',
       'Essay line: the settlement was durable precisely because it was unambitious.',
-      '',
-      '#seminar',
     ),
+    tags: ['seminar'],
   },
   {
     nb: 'hist',
@@ -178,9 +173,8 @@ export const SEED_NOTES: SeedNote[] = [
       '',
       '- [ ] Read the Hobsbawm chapter',
       '- [ ] Draft the essay opening',
-      '',
-      '#essay #seminar',
     ),
+    tags: ['essay', 'seminar'],
   },
   {
     nb: 'bio',
@@ -200,9 +194,8 @@ export const SEED_NOTES: SeedNote[] = [
       '',
       '- [x] Label the cristae diagram',
       '- [ ] Uncoupling agents, one paragraph',
-      '',
-      '#exam',
     ),
+    tags: ['exam'],
   },
   {
     nb: 'ethics',
@@ -222,9 +215,8 @@ export const SEED_NOTES: SeedNote[] = [
       '',
       '- [ ] Position paper, 1200 words',
       '- [ ] Find one deployed counter-example',
-      '',
-      '#essay #seminar',
     ),
+    tags: ['essay', 'seminar'],
   },
 ];
 

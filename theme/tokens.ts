@@ -86,6 +86,9 @@ export const shadow = {
  * wash. The first five come from the design's own two families; the rest are
  * mixed to sit on the same paper — each one clears 4.5:1 for its text on its
  * own wash and on the page, and stays visible against the paper as a dot.
+ *
+ * `notebooks.tint` has a check on its range in supabase/schema.sql: a new way
+ * here needs that check widened too, or saving a notebook in it fails.
  */
 export const TINTS = [
   { tint: c.a500, soft: c.a100, dark: c.a700, hex: '#d67f48' },

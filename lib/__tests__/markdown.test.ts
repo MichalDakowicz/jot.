@@ -8,13 +8,17 @@ function shape(kids: Inline[]): string {
     .map((k) => {
       if (k.t === 'text') return k.v;
       if (k.t === 'code') return 'code(' + k.v + ')';
-      if (k.t === 'tag' || k.t === 'mention') return k.t + '(' + k.v + ')';
+      if (k.t === 'mention') return k.t + '(' + k.v + ')';
       return k.t + '(' + shape(k.kids) + ')';
     })
     .join('');
 }
 
 describe('parseInline', () => {
+  it('leaves a # in the text as text, since tags live under the title', () => {
+    expect(shape(parseInline('revise for the #exam'))).toBe('revise for the #exam');
+  });
+
   it('reads a pair nested inside another', () => {
     expect(shape(parseInline('**bold *italic* bold**'))).toBe('bold(bold em(italic) bold)');
   });

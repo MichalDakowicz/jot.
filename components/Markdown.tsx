@@ -7,7 +7,6 @@ import { c, f } from '../theme/tokens';
 
 type Handlers = {
   onMention?: (noteId: string) => void;
-  onTag?: (tag: string) => void;
 };
 
 type Props = Handlers & {
@@ -63,12 +62,6 @@ function renderInline(nodes: Inline[], h: Handlers, keyBase: string): React.Reac
             onPress={() => void Linking.openURL(node.href).catch(() => undefined)}
           >
             {renderInline(node.kids, h, key)}
-          </Text>
-        );
-      case 'tag':
-        return (
-          <Text key={key} style={styles.tag} onPress={h.onTag ? () => h.onTag!(node.v) : undefined}>
-            #{node.v}
           </Text>
         );
       case 'mention':
@@ -189,12 +182,11 @@ export function Markdown({
   source,
   mentions = [],
   onMention,
-  onTag,
   compact = false,
   textStyle,
 }: Props) {
   const blocks = useMemo(() => parseBlocks(source.split('\n'), mentions), [source, mentions]);
-  const handlers = { onMention, onTag };
+  const handlers = { onMention };
   return <View>{blocks.map((b, i) => renderBlock(b, handlers, 'b' + i, compact, textStyle))}</View>;
 }
 
@@ -252,7 +244,6 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   link: { fontFamily: f.b600, color: c.a700, textDecorationLine: 'underline' },
-  tag: { fontFamily: f.b700, color: c.a700 },
   mention: {
     fontFamily: f.b600,
     color: c.g800,

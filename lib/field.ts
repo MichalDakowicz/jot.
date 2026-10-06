@@ -89,9 +89,8 @@ export function pasteRuns(
 ): { runs: Run[]; plain: string; caret: number } {
   // What was replaced hands over its annotation; otherwise the caret's own.
   const marks = end > start ? marksBefore(runs, start + 1) : marksBefore(runs, start);
-  // A mention or tag stops being one as soon as something lands in it.
+  // A mention stops being one as soon as something lands in it.
   delete marks.mention;
-  delete marks.tag;
   // Code is literal, so markdown pasted inside it stays as it was written.
   const put: Run[] = marks.code ? [{ text, marks }] : parseRuns(text, mentions, marks);
   const next = spliceRuns(runs, start, end, put);
@@ -145,6 +144,18 @@ export function replaceRuns(
 ): { runs: Run[]; caret: number } {
   const insert: Run[] = text ? [{ text, marks }] : [];
   return { runs: spliceRuns(runs, start, end, insert), caret: start + text.length };
+}
+
+/**
+ * A block marker typed at the head of `md`, taken back out: the first `cut`
+ * characters of its plain text go, and the annotations on the rest stay.
+ *
+ * `md` has to be the block as typed, marker and all. The block from before the
+ * key that finished the marker is one character short of it, so cutting the
+ * marker's length out of that takes the first letter of the text with it.
+ */
+export function dropMarker(md: string, cut: number, mentions: string[]): string {
+  return mdOf(replaceRuns(runsOf(md, mentions), 0, cut, '').runs);
 }
 
 /** A picked note goes in as a mention run, with a plain space after it. */

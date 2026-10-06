@@ -22,6 +22,8 @@ export type Note = {
   notebook_id: string;
   title: string;
   body: string;
+  /** Lower case, no "#"; set in the row under the title, not in the body. */
+  tags: string[];
   created_at: string;
   updated_at: string;
 };

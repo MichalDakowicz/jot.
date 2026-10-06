@@ -4,14 +4,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '../../../components/Icon';
 import { Markdown } from '../../../components/Markdown';
+import { NoteMeta } from '../../../components/NoteMeta';
 import { PaperDots } from '../../../components/PaperDots';
-import { BackLink, Empty, Kicker, Screen, TagChip } from '../../../components/ui';
+import { BackLink, Empty, Kicker, Screen } from '../../../components/ui';
 import { confirmDestructive } from '../../../lib/confirm';
 import { useFittedDisplaySize } from '../../../lib/fit';
 import { useIsWide } from '../../../lib/layout';
-import { tagsOf } from '../../../lib/markdown';
 import { useStore } from '../../../lib/store';
-import { relative } from '../../../lib/time';
 import { c, f, tintOf } from '../../../theme/tokens';
 
 export default function NoteScreen() {
@@ -62,9 +61,6 @@ export default function NoteScreen() {
         />
         {wide ? (
           <>
-            <Text style={styles.headMeta}>
-              {nb?.name ?? 'Notebook'} · edited {relative(note.updated_at)}
-            </Text>
             <View style={{ flex: 1 }} />
             <Pressable
               onPress={() => router.push(`/editor/${note.id}`)}
@@ -84,18 +80,12 @@ export default function NoteScreen() {
         {note.title}
       </Text>
 
-      <View style={styles.metaRow}>
-        <Text style={styles.meta}>Edited {relative(note.updated_at)}</Text>
-        {tagsOf(note.body).map((t) => (
-          <TagChip key={t} tag={t} size={11} onPress={() => router.push(`/tags?tag=${t}`)} />
-        ))}
-      </View>
+      <NoteMeta note={note} notebook={nb} />
 
       <Markdown
         source={note.body}
         mentions={mentionables}
         onMention={(noteId) => router.push(`/note/${noteId}`)}
-        onTag={(tag) => router.push(`/tags?tag=${tag}`)}
       />
 
       {related.length ? (
@@ -134,7 +124,6 @@ export default function NoteScreen() {
 
 const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 34 },
-  headMeta: { fontFamily: f.b700, fontSize: 12, color: c.n600 },
   editPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,8 +135,6 @@ const styles = StyleSheet.create({
   },
   editText: { fontFamily: f.b700, fontSize: 13, color: c.n800 },
   title: { fontFamily: f.head, color: c.text },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  meta: { fontFamily: f.b600, fontSize: 11.5, color: c.n500 },
   linked: {
     backgroundColor: c.g100,
     borderRadius: 28,

@@ -21,6 +21,7 @@ export default function Shelf() {
   const { width } = useWindowDimensions();
   const { notebooks, notes, createNotebook } = useStore();
   const [adding, setAdding] = useState(false);
+  const [failed, setFailed] = useState(false);
   /** A new notebook starts on the next colour along, not always the first. */
   const [draft, setDraft] = useState({ name: '', code: '', prof: '', tint: 0 });
 
@@ -28,12 +29,18 @@ export default function Shelf() {
 
   async function save() {
     if (!draft.name.trim()) return;
+    setFailed(false);
     const nb = await createNotebook({
       name: draft.name.trim(),
       code: draft.code.trim() || 'NEW',
       prof: draft.prof.trim(),
       tint: draft.tint,
     });
+    // A refused save keeps the dialog, and what was typed into it, on screen.
+    if (!nb) {
+      setFailed(true);
+      return;
+    }
     setAdding(false);
     setDraft({ name: '', code: '', prof: '', tint: notebooks.length % TINTS.length });
     if (nb) router.push(`/notebook/${nb.id}`);
@@ -87,6 +94,7 @@ export default function Shelf() {
               // Open on the next colour along, so a shelf of notebooks is not
               // all one hue unless that is what was chosen.
               setDraft((d) => ({ ...d, tint: notebooks.length % TINTS.length }));
+              setFailed(false);
               setAdding(true);
             }}
             style={({ pressed }) => [styles.addCard, { width: cardWidth }, pressed && { backgroundColor: c.n200 }]}
@@ -137,6 +145,7 @@ export default function Shelf() {
                 </Pressable>
               ))}
             </View>
+            {failed ? <Text style={styles.failed}>That notebook did not save. Try again in a moment.</Text> : null}
             <Pressable onPress={save} style={({ pressed }) => [styles.cta, pressed && { backgroundColor: c.a600 }]}>
               <Text style={styles.ctaText}>Create notebook</Text>
             </Pressable>
@@ -193,6 +202,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 4,
   },
+  failed: { fontFamily: f.b600, fontSize: 13, color: c.a800, backgroundColor: c.a200, borderRadius: 16, padding: 12 },
   cta: { backgroundColor: c.accent, borderRadius: 999, paddingVertical: 15, alignItems: 'center' },
   ctaText: { fontFamily: f.b700, fontSize: 15, color: c.paper },
 });

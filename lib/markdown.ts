@@ -1,7 +1,8 @@
 /**
  * The markdown dialect from the design: headings, bullets, numbers,
- * checkboxes, quotes, fences, rules, `code`, **bold**, *em*, ==mark==,
- * #tags and @Note mentions.
+ * checkboxes, quotes, fences, rules, `code`, **bold**, *em*, ==mark==
+ * and @Note mentions. A # in running text is just a character: tags live in
+ * the row under a note's title.
  */
 export type Inline =
   | { t: 'text'; v: string }
@@ -11,7 +12,6 @@ export type Inline =
   | { t: 'strike'; kids: Inline[] }
   | { t: 'code'; v: string }
   | { t: 'link'; href: string; kids: Inline[] }
-  | { t: 'tag'; v: string }
   | { t: 'mention'; v: string; id: string };
 
 export type ListItem = {
@@ -34,8 +34,6 @@ export type Block =
   | { t: 'space' };
 
 export type Mentionable = { id: string; title: string };
-
-const isSpace = (ch: string | undefined) => ch === undefined || /\s/.test(ch);
 
 /**
  * Where the pair opened at `i` closes, or -1.
@@ -174,16 +172,6 @@ export function parseInline(src: string, mentions: Mentionable[] = []): Inline[]
         flush();
         out.push({ t: 'em', kids: parseInline(src.slice(i + 1, end), mentions) });
         i = end + 1;
-        continue;
-      }
-    }
-
-    if (src[i] === '#' && isSpace(src[i - 1])) {
-      const m = /^#([a-z0-9-]+)/i.exec(rest);
-      if (m) {
-        flush();
-        out.push({ t: 'tag', v: m[1].toLowerCase() });
-        i += m[0].length;
         continue;
       }
     }
@@ -351,16 +339,6 @@ export function parseBlocks(lines: string[], mentions: Mentionable[] = []): Bloc
 
   flushList();
   if (fence) out.push({ t: 'fence', v: fence.join('\n') });
-  return out;
-}
-
-/** Tags a note carries, in first-seen order. */
-export function tagsOf(body: string): string[] {
-  const out: string[] = [];
-  (body.match(/(^|\s)#[a-z0-9-]+/gi) ?? []).forEach((raw) => {
-    const t = raw.trim().slice(1).toLowerCase();
-    if (!out.includes(t)) out.push(t);
-  });
   return out;
 }
 

@@ -21,7 +21,6 @@ export type Marks = {
   /** Link target; the run's text is the label. */
   link?: string;
   /** Derived from the text itself, not from delimiters. */
-  tag?: true;
   mention?: true;
 };
 
@@ -49,7 +48,6 @@ const sameMarks = (a: Marks, b: Marks) =>
   a.mark === b.mark &&
   a.strike === b.strike &&
   a.link === b.link &&
-  a.tag === b.tag &&
   a.mention === b.mention;
 
 function add(out: Run[], text: string, marks: Marks) {
@@ -80,16 +78,6 @@ export function parseRuns(md: string, mentions: string[] = [], marks: Marks = {}
         flush();
         add(out, '@' + hit, { ...marks, mention: true });
         i += hit.length + 1;
-        continue;
-      }
-    }
-
-    if (md[i] === '#' && (i === 0 || /\s/.test(md[i - 1]))) {
-      const m = /^#[a-z0-9-]+/i.exec(rest);
-      if (m) {
-        flush();
-        add(out, m[0], { ...marks, tag: true });
-        i += m[0].length;
         continue;
       }
     }
@@ -336,9 +324,8 @@ export function applyPlainEdit(
   // the annotation to its left. Without the first case a swap like "..." into a
   // single ellipsis picks up the marks of the run before it.
   const marks = removed ? marksBefore(runs, head + 1) : marksBefore(runs, head);
-  // A mention or tag stops being one as soon as it is typed into.
+  // A mention stops being one as soon as it is typed into.
   delete marks.mention;
-  delete marks.tag;
   // Typing straight on from a pair that just closed is outside it again: the
   // closing delimiter is how a writer says "that's enough bold".
   if (pending && pending.at === head) pending.deny.forEach((k) => delete marks[k]);

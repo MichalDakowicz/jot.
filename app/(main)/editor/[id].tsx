@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiveField, type LiveFieldHandle } from '../../../components/LiveField';
 import { MarkBar } from '../../../components/MarkBar';
 import { MentionPicker, type MentionHit } from '../../../components/MentionPicker';
+import { NoteMeta } from '../../../components/NoteMeta';
 import { SlashMenu, type CaretSpot } from '../../../components/SlashMenu';
 import { Empty, Screen } from '../../../components/ui';
 import {
@@ -33,7 +34,7 @@ import {
   type Block,
   type BlockKind,
 } from '../../../lib/doc';
-import { mdOf, plainFor, replaceRuns, runsOf } from '../../../lib/field';
+import { dropMarker, plainFor } from '../../../lib/field';
 import { stepPick } from '../../../lib/menu';
 import { pasteInto } from '../../../lib/paste';
 import { useFittedDisplaySize } from '../../../lib/fit';
@@ -85,7 +86,7 @@ export default function Editor() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const wide = useIsWide();
-  const { noteById, notebookById, notes, mentionables, updateNote, flushSaves } = useStore();
+  const { noteById, notebookById, notebooks, notes, mentionables, updateNote, flushSaves } = useStore();
 
   const note = noteById(id);
   const blocks = useMemo(() => parseDoc(note?.body ?? ''), [note?.body]);
@@ -126,6 +127,8 @@ export default function Editor() {
   const [span, setSpan] = useState<{ from: number; to: number } | null>(null);
   const [keyboard, setKeyboard] = useState(0);
   const sel = useRef<Range>({ start: 0, end: 0 });
+  /** The markdown a field last handed back, and for which block. */
+  const reported = useRef<{ i: number; md: string } | null>(null);
   const field = useRef<LiveFieldHandle | null>(null);
   const spanRef = useRef<{ from: number; to: number } | null>(null);
   const dropRef = useRef<(() => void) | null>(null);
@@ -462,6 +465,7 @@ export default function Editor() {
 
   /** The field saved new markdown for its block. */
   function onBlockChange(md: string, i: number) {
+    reported.current = { i, md };
     const next = [...blocks];
     next[i] = { ...next[i], text: md };
     save(next);
@@ -494,13 +498,14 @@ export default function Editor() {
         return;
       }
 
-      // Cutting by offset keeps any annotations the rest of the block carries.
-      const trimmed = replaceRuns(runsOf(block.text, mentionTitles), 0, cut, '');
+      // The field reports its text and then this, in one handler, so `blocks`
+      // has not caught up yet: what it holds is the block from before the key.
+      const md = reported.current?.i === i ? reported.current.md : block.text;
       replace(
         i,
         {
           kind: converted.kind,
-          text: converted.kind === 'fence' ? '' : mdOf(trimmed.runs),
+          text: converted.kind === 'fence' ? '' : dropMarker(md, cut, mentionTitles),
           done: converted.kind === 'todo' ? converted.done : undefined,
           lang: converted.kind === 'fence' ? (converted.lang ?? '') : undefined,
           // A list that becomes another kind of list stays where it sits.
@@ -849,6 +854,14 @@ export default function Editor() {
             style={[styles.title, { fontSize: title.fontSize, lineHeight: title.fontSize * 1.26 }]}
           />
         </View>
+
+        <NoteMeta
+          note={note}
+          notebook={notebookById(note.notebook_id)}
+          notebooks={notebooks}
+          onMove={(notebookId) => updateNote(noteId, { notebook_id: notebookId })}
+          onTags={(tags) => updateNote(noteId, { tags })}
+        />
 
         <View style={{ gap: 3 }}>
           {blocks.map((block, i) => {

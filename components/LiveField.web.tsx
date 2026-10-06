@@ -392,7 +392,6 @@ function attrOf(marks: Marks): string {
   if (marks.strike) out.push('text-decoration:line-through');
   if (marks.mark) out.push(`background-color:${c.a200}`, `color:${c.a900}`);
   if (marks.code) out.push(`font-family:${f.mono}`, 'font-size:13.5px', `color:${c.a800}`);
-  if (marks.tag) out.push(`font-family:${f.b700}`, `color:${c.a700}`);
   if (marks.mention) out.push(`font-family:${f.b600}`, `color:${c.g800}`);
   if (marks.link) out.push(`font-family:${f.b600}`, `color:${c.a700}`, 'text-decoration:underline');
   return out.join(';');
