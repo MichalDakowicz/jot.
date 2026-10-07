@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from './Icon';
 import { useIsWide } from '../lib/layout';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import type { NoteCard } from '../lib/types';
 import { c, f, shadow } from '../theme/tokens';
 
@@ -27,9 +28,11 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const wide = useIsWide();
+  // Shrinks the viewport itself, so a field being typed into scrolls above the keyboard.
+  const keyboard = useKeyboardHeight();
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, keyboard ? { marginBottom: keyboard } : null]}
       contentContainerStyle={[
         {
           paddingTop: wide ? 26 : insets.top + 14,

@@ -14,11 +14,13 @@ import { Blob } from '../../components/Blob';
 import { Icon } from '../../components/Icon';
 import { Pill, Screen, Title } from '../../components/ui';
 import { useStore } from '../../lib/store';
+import { useKeyboardHeight } from '../../lib/useKeyboardHeight';
 import { c, f, shadow, TINTS, tintOf } from '../../theme/tokens';
 
 export default function Shelf() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const keyboard = useKeyboardHeight();
   const { notebooks, notes, createNotebook } = useStore();
   const [adding, setAdding] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -107,7 +109,7 @@ export default function Shelf() {
 
       <Modal visible={adding} transparent animationType="fade" onRequestClose={() => setAdding(false)}>
         <Pressable style={styles.backdrop} onPress={() => setAdding(false)} />
-        <View style={styles.dialogWrap} pointerEvents="box-none">
+        <View style={[styles.dialogWrap, { paddingBottom: 22 + keyboard }]} pointerEvents="box-none">
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>A new notebook</Text>
             <TextInput

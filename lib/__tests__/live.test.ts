@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyChange, stampOf, takesNote, upsertRows } from '../live';
+import { applyChange, requeued, stampOf, takesNote, upsertRows } from '../live';
 
 type Row = { id: string; text: string; at: number };
 
@@ -71,5 +71,15 @@ describe('takesNote', () => {
   it('takes a newer change from elsewhere', () => {
     expect(takesNote({ updated_at: '2026-10-04T16:05:22+00:00' }, { busy: false, savedAt: saved })).toBe(true);
     expect(takesNote({ updated_at: saved }, { busy: false })).toBe(true);
+  });
+});
+
+describe('requeued', () => {
+  it('puts a failed save back so its fields are sent again', () => {
+    expect(requeued({ title: 'Week 3' }, undefined)).toEqual({ title: 'Week 3' });
+  });
+
+  it('keeps what was typed since over the failed copy of the same field', () => {
+    expect(requeued({ title: 'old', tags: ['a'] }, { title: 'new' })).toEqual({ title: 'new', tags: ['a'] });
   });
 });

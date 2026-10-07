@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Keyboard, View } from 'react-native';
 
 import { DesktopChrome } from '../../components/DesktopChrome';
+import { ErrorBanner } from '../../components/ErrorBanner';
 import { NavIslands, type NavKey } from '../../components/NavIslands';
 import { ProfileSheet } from '../../components/ProfileSheet';
 import { initialsOf, useAuth } from '../../lib/auth';
@@ -96,6 +97,7 @@ export default function MainLayout() {
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: c.bg }}>
         <DesktopChrome onProfile={() => setSheet(true)} />
         <View style={{ flex: 1, minWidth: 0 }}>{stack}</View>
+        <ErrorBanner />
         {sheetNode}
       </View>
     );
@@ -104,6 +106,7 @@ export default function MainLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {stack}
+      <ErrorBanner />
 
       {keyboardUp ? null : (
         <NavIslands

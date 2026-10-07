@@ -93,3 +93,13 @@ export function takesNote(
   if (!savedAt || !incoming.updated_at) return true;
   return stampOf(incoming.updated_at) > stampOf(savedAt);
 }
+
+/**
+ * The edits to send next after a save failed: what failed, under anything
+ * typed since. Without this the failed fields are gone for good, because the
+ * queue is emptied before the request goes out and a later edit only carries
+ * its own fields.
+ */
+export function requeued<T extends object>(failed: T, queued: T | undefined): T {
+  return { ...failed, ...queued };
+}

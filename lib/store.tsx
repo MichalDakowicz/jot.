@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import { useAuth } from './auth';
 import { utf8ToBytes } from './bytes';
-import { applyChange, takesNote, upsertRows, type Change } from './live';
+import { applyChange, requeued, takesNote, upsertRows, type Change } from './live';
 import { plainText, type Mentionable } from './markdown';
 import { SEED_CLASSES, SEED_NOTEBOOKS, SEED_NOTES } from './seed';
 import { supabase, supabaseConfigured } from './supabase';
@@ -22,6 +22,7 @@ export type NotePatch = { title?: string; body?: string; tags?: string[]; notebo
 type StoreValue = {
   loading: boolean;
   error: string | null;
+  dismissError: () => void;
   notebooks: Notebook[];
   notes: Note[];
   classes: ClassSession[];
@@ -198,7 +199,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .select('updated_at');
     saving.current[id] -= 1;
     if (!saving.current[id]) delete saving.current[id];
-    if (saveError) setError(saveError.message);
+    if (saveError) {
+      pending.current[id] = requeued(patch, pending.current[id]);
+      setError(`Could not save your note: ${saveError.message}`);
+    }
     // The server stamps the row itself; that stamp is how this save's own echo
     // is told apart from a change made somewhere else.
     const stamp = (data as { updated_at: string }[] | null)?.[0]?.updated_at;
@@ -278,6 +282,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => ({
       loading,
       error,
+      dismissError: () => setError(null),
       notebooks,
       notes,
       classes,
