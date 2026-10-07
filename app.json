@@ -37,7 +37,8 @@
         {
           "photosPermission": "Jot. uses your photos to set a profile picture."
         }
-      ]
+      ],
+      "./plugins/with-android-build"
     ],
     "experiments": {
       "typedRoutes": true
