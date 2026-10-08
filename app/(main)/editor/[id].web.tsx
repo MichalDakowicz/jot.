@@ -59,6 +59,8 @@ export default function WebEditor() {
         contentContainerStyle={{
           paddingTop: insets.top + 10,
           paddingBottom: 14,
+          // So a short note still fills the screen and the count sits at its foot.
+          flexGrow: 1,
           // The same measure as the note it turns into, so nothing shifts
           // sideways between reading and writing.
           paddingHorizontal: wide ? 52 : 20,

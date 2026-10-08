@@ -396,7 +396,16 @@ export function TiptapEditor({ markdown, notes, onChange }: TiptapEditorProps) {
   const counted = countOf(empty ? doc.textBetween(0, doc.content.size, '\n', '\n') : doc.textBetween(from, to, '\n', '\n'));
 
   return (
-    <div className="jot-pm-wrap">
+    <div
+      className="jot-pm-wrap"
+      // The editor fills the screen, so the blank space under the text is part
+      // of it: a click there puts the caret at the end, as on a page.
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('.jot-pm, .jot-bar, .jot-menu, .jot-tablebar, .jot-count')) {
+          editor.commands.focus('end');
+        }
+      }}
+    >
       <style>{CSS}</style>
 
       {inTable ? (
@@ -537,8 +546,8 @@ function Btn({ label, onPress, tone }: { label: string; onPress: () => void; ton
 /* ───────────────────────────────────────────── look */
 
 const CSS = `
-.jot-pm-wrap { position: relative; }
-.jot-pm { tab-size: 4; outline: none; min-height: 30vh; font-family: ${f.b400}, sans-serif; font-size: 15px; line-height: 25px; color: ${c.n800}; padding-bottom: 8px; caret-color: ${c.accent}; }
+.jot-pm-wrap { position: relative; display: flex; flex-direction: column; flex: 1 0 auto; }
+.jot-pm { tab-size: 4; outline: none; min-height: 120px; font-family: ${f.b400}, sans-serif; font-size: 15px; line-height: 25px; color: ${c.n800}; padding-bottom: 8px; caret-color: ${c.accent}; }
 .jot-pm ::selection { background: ${c.a200}; }
 .jot-pm p { margin: 0 0 4px; }
 .jot-pm p.is-empty::before, .jot-pm h1.is-empty::before, .jot-pm h2.is-empty::before, .jot-pm h3.is-empty::before, .jot-pm h4.is-empty::before {
@@ -583,7 +592,7 @@ const CSS = `
 .jot-pm.ProseMirror-focused .ProseMirror-gapcursor { display: block; }
 @keyframes jot-blink { to { visibility: hidden; } }
 
-.jot-count { position: sticky; bottom: 14px; z-index: 5; width: fit-content; margin: 0 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: ${c.paper}; border: 1px solid ${c.n200}; box-shadow: 0 2px 8px rgba(46,43,37,0.08); font-family: ${f.b600}, sans-serif; font-size: 12px; color: ${c.n600}; pointer-events: none; user-select: none; }
+.jot-count { position: sticky; bottom: 14px; z-index: 5; width: fit-content; margin: auto 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: ${c.paper}; border: 1px solid ${c.n200}; box-shadow: 0 2px 8px rgba(46,43,37,0.08); font-family: ${f.b600}, sans-serif; font-size: 12px; color: ${c.n600}; pointer-events: none; user-select: none; }
 .jot-count[data-selected="true"] { background: ${c.a100}; border-color: ${c.a200}; color: ${c.a800}; }
 .jot-count-tag { font-family: ${f.b800}, sans-serif; font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: ${c.a700}; }
 .jot-count-dot { color: ${c.n400}; }
