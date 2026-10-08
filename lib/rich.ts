@@ -144,7 +144,23 @@ export function plainOf(runs: Run[]): string {
 /** The marks written as a delimiter pair, in a fixed order to break ties. */
 const NEST: (keyof Marks)[] = ['link', 'bold', 'strike', 'mark', 'em'];
 
+/**
+ * One mark written around its text. Whitespace at either end stays outside:
+ * "**bold **" does not read back as bold, because a closing delimiter has to
+ * hug its text (see pairCloser), so "bold " is written "**bold** " and the
+ * stretch that was marked reads back marked.
+ */
 function wrapped(kind: keyof Marks, text: string, marks: Marks): string {
+  const lead = /^\s*/.exec(text)?.[0] ?? '';
+  const rest = text.slice(lead.length);
+  const trail = /\s*$/.exec(rest)?.[0] ?? '';
+  const core = rest.slice(0, rest.length - trail.length);
+  // Nothing but whitespace has nothing to mark.
+  if (!core) return text;
+  return lead + delimited(kind, core, marks) + trail;
+}
+
+function delimited(kind: keyof Marks, text: string, marks: Marks): string {
   if (kind === 'link') return `[${text}](${marks.link})`;
   if (kind === 'bold') return `**${text}**`;
   if (kind === 'strike') return `~~${text}~~`;

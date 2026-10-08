@@ -82,6 +82,24 @@ describe('markdown through the Tiptap document', () => {
     expect(roundTrip('one\n\ntwo')).toBe('one\n\ntwo');
   });
 
+  it('writes the space outside a mark, so it opens marked', () => {
+    const doc: PMNode = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'text ', marks: [{ type: 'bold' }] },
+            { type: 'text', text: 'after' },
+          ],
+        },
+      ],
+    };
+    const md = pmToDoc(doc);
+    expect(md).toBe('**text** after');
+    expect(roundTrip(md)).toBe(md);
+  });
+
   it('opens an empty note as one empty paragraph', () => {
     expect(docToPM('').content).toEqual([{ type: 'paragraph' }]);
     expect(roundTrip('')).toBe('');

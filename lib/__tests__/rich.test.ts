@@ -77,6 +77,56 @@ describe('serializeRuns', () => {
       expect(shape(parseRuns(serializeRuns(parseRuns(md))))).toEqual(shape(parseRuns(md)));
     });
   });
+
+  // "**text **" is not a pair: a closing delimiter has to hug its text, so the
+  // note reopened with the stars showing and nothing bold.
+  describe('whitespace at the edge of a mark', () => {
+    const run = (text: string, marks: Run['marks'] = {}): Run => ({ text, marks });
+
+    it('writes a trailing space outside the delimiters', () => {
+      expect(serializeRuns([run('text ', { bold: true })])).toBe('**text** ');
+      expect(serializeRuns([run('text ', { em: true })])).toBe('*text* ');
+      expect(serializeRuns([run('text ', { mark: true })])).toBe('==text== ');
+      expect(serializeRuns([run('text ', { strike: true })])).toBe('~~text~~ ');
+    });
+
+    it('writes a leading space, and both, outside', () => {
+      expect(serializeRuns([run(' text', { bold: true })])).toBe(' **text**');
+      expect(serializeRuns([run('  text  ', { bold: true })])).toBe('  **text**  ');
+      expect(serializeRuns([run('\ttext', { em: true })])).toBe('\t*text*');
+    });
+
+    it('moves the space out of a link label too', () => {
+      expect(serializeRuns([run('a link ', { link: 'https://x.test' })])).toBe('[a link](https://x.test) ');
+    });
+
+    it('leaves a space in the middle of a mark alone', () => {
+      expect(serializeRuns([run('two words', { bold: true })])).toBe('**two words**');
+    });
+
+    it('does not mark text that is only whitespace', () => {
+      expect(serializeRuns([run('a'), run(' ', { bold: true }), run('b')])).toBe('a b');
+      expect(serializeRuns([run('   ', { em: true })])).toBe('   ');
+    });
+
+    it('moves the space out of every level of a nest', () => {
+      const runs = [run('bold ', { bold: true }), run('em ', { bold: true, em: true })];
+      const md = serializeRuns(runs);
+      expect(md).toBe('**bold *em*** ');
+      expect(shape(parseRuns(md))).toEqual(['bold {bold}', 'em{bold,em}', ' {}']);
+    });
+
+    it('reads back marked, with the space outside', () => {
+      const md = serializeRuns([run('text ', { bold: true }), run('more')]);
+      expect(md).toBe('**text** more');
+      expect(shape(parseRuns(md))).toEqual(['text{bold}', ' more{}']);
+    });
+
+    it('reads back the same on every further save', () => {
+      const once = serializeRuns([run('a ', { bold: true }), run(' b', { em: true })]);
+      expect(serializeRuns(parseRuns(once))).toBe(once);
+    });
+  });
 });
 
 describe('pasteRuns', () => {
