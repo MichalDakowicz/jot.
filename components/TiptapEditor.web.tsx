@@ -11,6 +11,7 @@ import type { Editor } from '@tiptap/core';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { countOf, plural } from '../lib/count';
 import { letterIndex } from '../lib/doc';
 import { docToPM, pmToDoc, type PMNode } from '../lib/tiptapDoc';
 import { c, f } from '../theme/tokens';
@@ -50,6 +51,47 @@ const LetteredList = OrderedList.extend({
         getAttributes: (m) => ({ type: 'a', start: letterIndex(m[1]) }),
       }),
     ];
+  },
+});
+
+/**
+ * Tab never leaves the editor. Lists nest and tables step cells on their own;
+ * this is what is left, and it matches the phone: a tab in plain text (Shift
+ * takes one back out), two spaces in code, and nothing at all where there is
+ * nothing to nest, rather than the browser moving focus to the next control.
+ */
+const TabKey = Extension.create({
+  name: 'tabKey',
+  // After the list and table handlers, which return true when they act.
+  priority: 10,
+  addKeyboardShortcuts() {
+    return {
+      Tab: ({ editor }) => {
+        if (editor.isActive('codeBlock')) {
+          editor.commands.insertContent({ type: 'text', text: '  ' });
+        } else if (!editor.isActive('listItem') && !editor.isActive('taskItem') && !editor.isActive('table')) {
+          editor.commands.insertContent({ type: 'text', text: '\t' });
+        }
+        return true;
+      },
+      'Shift-Tab': ({ editor }) => {
+        const { $from } = editor.state.selection;
+        if (!$from.parent.isTextblock) return true;
+        const text = $from.parent.textContent;
+        const base = $from.start();
+        if (editor.isActive('codeBlock')) {
+          // The line pulled two spaces back.
+          const head = text.lastIndexOf('\n', Math.max(0, $from.parentOffset - 1)) + 1;
+          const space = /^ {1,2}/.exec(text.slice(head))?.[0] ?? '';
+          if (space) editor.commands.deleteRange({ from: base + head, to: base + head + space.length });
+          return true;
+        }
+        // Two spaces come out as readily as a tab: pasted text is indented that way.
+        const cut = /(\t| {1,2})$/.exec(text.slice(0, $from.parentOffset))?.[0];
+        if (cut) editor.commands.deleteRange({ from: $from.pos - cut.length, to: $from.pos });
+        return true;
+      },
+    };
   },
 });
 
@@ -234,6 +276,7 @@ export function TiptapEditor({ markdown, notes, onChange }: TiptapEditorProps) {
         link: { openOnClick: false, autolink: false, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } },
       }),
       LetteredList,
+      TabKey,
       TodoShortcut,
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -346,6 +389,12 @@ export function TiptapEditor({ markdown, notes, onChange }: TiptapEditorProps) {
 
   const inTable = editor.isActive('table');
 
+  // The count follows the selection: what is highlighted when something is,
+  // the whole note otherwise.
+  const { from, to, empty } = editor.state.selection;
+  const doc = editor.state.doc;
+  const counted = countOf(empty ? doc.textBetween(0, doc.content.size, '\n', '\n') : doc.textBetween(from, to, '\n', '\n'));
+
   return (
     <div className="jot-pm-wrap">
       <style>{CSS}</style>
@@ -361,6 +410,13 @@ export function TiptapEditor({ markdown, notes, onChange }: TiptapEditorProps) {
       ) : null}
 
       <EditorContent editor={editor} />
+
+      <div className="jot-count" data-selected={!empty} role="status">
+        {empty ? null : <span className="jot-count-tag">Selected</span>}
+        <span>{plural(counted.words, 'word')}</span>
+        <span className="jot-count-dot">·</span>
+        <span>{plural(counted.chars, 'character')}</span>
+      </div>
 
       {bar ? (
         <OnBody>
@@ -482,7 +538,7 @@ function Btn({ label, onPress, tone }: { label: string; onPress: () => void; ton
 
 const CSS = `
 .jot-pm-wrap { position: relative; }
-.jot-pm { outline: none; min-height: 50vh; font-family: ${f.b400}, sans-serif; font-size: 15px; line-height: 25px; color: ${c.n800}; padding-bottom: 40vh; caret-color: ${c.accent}; }
+.jot-pm { tab-size: 4; outline: none; min-height: 30vh; font-family: ${f.b400}, sans-serif; font-size: 15px; line-height: 25px; color: ${c.n800}; padding-bottom: 8px; caret-color: ${c.accent}; }
 .jot-pm ::selection { background: ${c.a200}; }
 .jot-pm p { margin: 0 0 4px; }
 .jot-pm p.is-empty::before, .jot-pm h1.is-empty::before, .jot-pm h2.is-empty::before, .jot-pm h3.is-empty::before, .jot-pm h4.is-empty::before {
@@ -526,6 +582,11 @@ const CSS = `
 .jot-pm .ProseMirror-gapcursor::after { content: ''; display: block; position: absolute; top: -2px; width: 20px; border-top: 1px solid ${c.accent}; animation: jot-blink 1.1s steps(2, start) infinite; }
 .jot-pm.ProseMirror-focused .ProseMirror-gapcursor { display: block; }
 @keyframes jot-blink { to { visibility: hidden; } }
+
+.jot-count { position: sticky; bottom: 14px; z-index: 5; width: fit-content; margin: 0 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: ${c.paper}; border: 1px solid ${c.n200}; box-shadow: 0 2px 8px rgba(46,43,37,0.08); font-family: ${f.b600}, sans-serif; font-size: 12px; color: ${c.n600}; pointer-events: none; user-select: none; }
+.jot-count[data-selected="true"] { background: ${c.a100}; border-color: ${c.a200}; color: ${c.a800}; }
+.jot-count-tag { font-family: ${f.b800}, sans-serif; font-size: 10.5px; letter-spacing: 0.8px; text-transform: uppercase; color: ${c.a700}; }
+.jot-count-dot { color: ${c.n400}; }
 
 .jot-bar { position: fixed; z-index: 60; transform: translate(-50%, calc(-100% - 8px)); display: flex; gap: 2px; padding: 4px; background: ${c.n900}; border-radius: 12px; box-shadow: 0 8px 24px rgba(46,43,37,0.28); }
 .jot-bar button { border: none; background: none; color: ${c.n100}; font-family: ${f.b700}, sans-serif; font-size: 13px; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; cursor: pointer; }

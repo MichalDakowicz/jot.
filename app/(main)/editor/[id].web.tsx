@@ -58,7 +58,7 @@ export default function WebEditor() {
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: insets.top + 10,
-          paddingBottom: 60,
+          paddingBottom: 14,
           // The same measure as the note it turns into, so nothing shifts
           // sideways between reading and writing.
           paddingHorizontal: wide ? 52 : 20,
