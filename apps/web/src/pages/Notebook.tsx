@@ -1,20 +1,60 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { EditorView } from '@codemirror/view';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 
+import { countOf, plural } from '@jot/core/count';
 import { useStore } from '@jot/core/store';
 
-import { ClassTimes } from '../components/ClassTimes';
 import { Icon } from '../components/Icon';
-import { NoteList } from '../components/NoteList';
+import { NoteBar } from '../components/NoteBar';
 import { NotebookDot } from '../components/NotebookDot';
-import { PublicLink } from '../components/PublicLink';
-import { TopBar } from '../components/Shell';
+import { NotebookSettings } from '../components/NotebookSettings';
+import { TopBar, useStatus } from '../components/Shell';
+import { Minimap } from '../editor/Minimap';
+import { NotebookEditor } from '../editor/NotebookEditor';
+import { sectionAt, sectionRanges } from '../editor/sections';
 
+/** A notebook is one file: its notes are the "# " sections in it. */
 export function NotebookPage() {
   const { id } = useParams();
+  const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const { notebookById, notesOf, cardOf, createNote, deleteNotebook } = useStore();
+  const { notebookById, notesOf, noteById } = useStore();
   const nb = notebookById(id);
+  const notes = nb ? notesOf(nb.id) : [];
+  const [view, setView] = useState<EditorView | null>(null);
+  const [tick, setTick] = useState(0);
+  const [settings, setSettings] = useState(false);
+  const scroller = useRef<HTMLDivElement>(null);
+  const wanted = params.get('note');
+
+  const onView = useCallback((v: EditorView) => {
+    setView(v);
+    setTick((t) => t + 1);
+  }, []);
+
+  // A link to one note, followed while the notebook is already open, moves the caret there.
+  useEffect(() => {
+    if (!view || !wanted) return;
+    const range = sectionRanges(view.state).find((r) => r.id === wanted);
+    if (range) view.dispatch({ selection: { anchor: range.from + 2 }, effects: EditorView.scrollIntoView(range.from, { y: 'start', yMargin: 64 }) });
+    setParams({}, { replace: true });
+  }, [view, wanted, setParams]);
+
+  const current = view ? noteById(sectionAt(view.state, view.state.selection.main.head) ?? undefined) : undefined;
+  const caret = view ? view.state.doc.lineAt(view.state.selection.main.head) : null;
+  const { words, chars } = countOf(view ? view.state.doc.toString() : '');
+  useStatus({
+    left: <span className="wide-only">{notes.length} {notes.length === 1 ? 'note' : 'notes'}</span>,
+    right: caret ? (
+      <>
+        <span>Ln {caret.number}, Col {view!.state.selection.main.head - caret.from + 1}</span>
+        <span>{plural(words, 'word')}</span>
+        <span className="wide-only">{plural(chars, 'char')}</span>
+        <span className="wide-only">markdown</span>
+      </>
+    ) : null,
+  }, [notes.length, words, chars, tick]);
 
   if (!nb) {
     return (
@@ -24,36 +64,47 @@ export function NotebookPage() {
       </>
     );
   }
-  const notes = notesOf(nb.id);
+
+  function addNote() {
+    if (!view) return;
+    const end = view.state.doc.length;
+    view.dispatch({ changes: { from: end, insert: '\n# ' }, selection: { anchor: end + 3 }, scrollIntoView: true });
+    view.focus();
+  }
+
+  function removeCurrent() {
+    if (!view || !current) return;
+    const range = sectionRanges(view.state).find((r) => r.id === current.id);
+    if (!range) return;
+    // A section takes its line break with it, from whichever side has one.
+    const from = range.to === view.state.doc.length && range.from > 0 ? range.from - 1 : range.from;
+    view.dispatch({ changes: { from, to: range.to } });
+  }
 
   return (
     <>
       <TopBar
-        crumbs={<><NotebookDot tint={nb.tint} /> <span className="here">{nb.name}/</span></>}
+        crumbs={<>
+          <NotebookDot tint={nb.tint} />
+          <span className="here">{nb.name.toLowerCase().replace(/\s+/g, '-')}.md</span>
+          {current ? <><span className="sep">›</span><span className="crumb-note">{current.title || 'Untitled'}</span></> : null}
+        </>}
         actions={<>
-          <PublicLink kind="notebook" id={nb.id} published={!!nb.is_public} />
-          <button className="chip" onClick={async () => {
-            const note = await createNote(nb.id);
-            if (note) navigate(`/note/${note.id}`);
-          }}><Icon name="plus" size={14} /> note</button>
+          <button className="chip" onClick={addNote}><Icon name="plus" size={14} /> note</button>
+          <button className={'chip' + (settings ? ' on' : '')} aria-pressed={settings} onClick={() => setSettings((s) => !s)}>notebook</button>
         </>}
       />
-      <div className="content">
-        <div className="page">
-          <h1 className="page-title">{nb.name}</h1>
-          <p className="muted">{[nb.code, nb.prof].filter(Boolean).join(' · ') || ' '}</p>
-          <section className="section">
-            <h2 className="label">{notes.length} {notes.length === 1 ? 'note' : 'notes'}</h2>
-            <NoteList cards={notes.map(cardOf)} showNotebook={false} />
-          </section>
-          <ClassTimes notebookId={nb.id} />
-          <section className="section danger-zone">
-            <button className="button danger" onClick={async () => {
-              if (!window.confirm(`Delete “${nb.name}” and its ${notes.length} notes? This cannot be undone.`)) return;
-              await deleteNotebook(nb.id);
-              navigate('/shelf', { replace: true });
-            }}>Delete this notebook</button>
-          </section>
+      {current ? <NoteBar note={current} notebookPublic={!!nb.is_public} onRemove={removeCurrent} /> : null}
+      <div className="content" ref={scroller}>
+        <div className="note-layout">
+          <div className="note-column">
+            {settings ? <NotebookSettings notebook={nb} noteCount={notes.length} /> : (
+              <p className="notebook-head muted">{[nb.code, nb.prof].filter(Boolean).join(' · ')}</p>
+            )}
+            <NotebookEditor notebookId={nb.id} notes={notes} startNote={wanted}
+              onMention={(target) => navigate(`/note/${target}`)} onView={onView} />
+          </div>
+          <Minimap view={view} tick={tick} scroller={scroller.current} />
         </div>
       </div>
     </>

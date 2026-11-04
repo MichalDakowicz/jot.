@@ -54,7 +54,7 @@ export function layoutGraph(size: number, notebooks: Notebook[], notes: Note[]) 
   const edges: GraphEdge[] = [];
   notes.forEach((n) => {
     notes.forEach((o) => {
-      if (o.id === n.id || !n.body.includes('@' + o.title)) return;
+      if (o.id === n.id || !o.title.trim() || !n.body.includes('@' + o.title)) return;
       const a = placed[n.id];
       const b = placed[o.id];
       if (!a || !b) return;

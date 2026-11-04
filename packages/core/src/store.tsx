@@ -16,7 +16,12 @@ const SAVE_DEBOUNCE_MS = 700;
 type TagCount = { name: string; count: number };
 
 /** What a note edit can change; the editor saves these as they are made. */
-export type NotePatch = { title?: string; body?: string; tags?: string[]; notebook_id?: string };
+export type NotePatch = { title?: string; body?: string; tags?: string[]; notebook_id?: string; position?: number };
+
+/** What a new note can start with; a notebook document creates its notes already titled and placed. */
+export type NoteInit = { id?: string; title?: string; body?: string; position?: number };
+
+export type NotebookPatch = Partial<Pick<Notebook, 'name' | 'code' | 'prof' | 'tint'>>;
 
 type StoreValue = {
   loading: boolean;
@@ -40,11 +45,12 @@ type StoreValue = {
   todaysClasses: () => (ClassSession & { notebook: Notebook | undefined })[];
   classesOf: (notebookId: string) => ClassSession[];
 
-  createNote: (notebookId: string) => Promise<Note | null>;
+  createNote: (notebookId: string, init?: NoteInit) => Promise<Note | null>;
   updateNote: (id: string, patch: NotePatch) => void;
   flushSaves: () => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   createNotebook: (input: { name: string; code: string; prof: string; tint: number }) => Promise<Notebook | null>;
+  updateNotebook: (id: string, patch: NotebookPatch) => Promise<void>;
   addClasses: (input: {
     notebookId: string;
     weekdays: number[];
@@ -63,6 +69,10 @@ const byUpdatedDesc = (a: Note, b: Note) =>
   new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
 
 const byPosition = (a: Notebook, b: Notebook) => a.position - b.position;
+
+/** A notebook's notes in document order; notes from before the order existed fall back to when they were made. */
+const inDocument = (a: Note, b: Note) =>
+  (a.position ?? 0) - (b.position ?? 0) || a.created_at.localeCompare(b.created_at);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -263,12 +273,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const linksOf = useCallback(
-    (note: Note) => notes.filter((o) => o.id !== note.id && note.body.includes('@' + o.title)),
+    // An untitled note has nothing to be mentioned by; a bare "@" is not a link to it.
+    (note: Note) => notes.filter((o) => o.id !== note.id && !!o.title.trim() && note.body.includes('@' + o.title)),
     [notes],
   );
 
   const backlinksOf = useCallback(
-    (note: Note) => notes.filter((o) => o.id !== note.id && o.body.includes('@' + note.title)),
+    (note: Note) => (note.title.trim() ? notes.filter((o) => o.id !== note.id && o.body.includes('@' + note.title)) : []),
     [notes],
   );
 
@@ -286,7 +297,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       noteById: (id) => notes.find((n) => n.id === id),
       notebookById: nbOf,
-      notesOf: (notebookId) => notes.filter((n) => n.notebook_id === notebookId).sort(byUpdatedDesc),
+      notesOf: (notebookId) => notes.filter((n) => n.notebook_id === notebookId).sort(inDocument),
       cardOf,
       linksOf,
       backlinksOf,
@@ -343,14 +354,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (delError) setError(delError.message);
       },
 
-      async createNote(notebookId) {
+      async createNote(notebookId, init) {
         if (!uid) return null;
-        const count = notes.filter((n) => n.notebook_id === notebookId).length;
+        const own = notes.filter((n) => n.notebook_id === notebookId);
         const row = {
+          ...(init?.id ? { id: init.id } : {}),
           user_id: uid,
           notebook_id: notebookId,
-          title: 'Untitled note',
-          body: `Lecture ${count + 1}\n\n`,
+          title: init?.title ?? 'Untitled note',
+          body: init?.body ?? `Lecture ${own.length + 1}\n\n`,
+          position: init?.position ?? own.reduce((max, n) => Math.max(max, (n.position ?? 0) + 1), 0),
         };
         const { data, error: insertError } = await supabase.from('notes').insert(row).select().single();
         if (insertError) {
@@ -390,6 +403,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return nb;
       },
 
+      async updateNotebook(id, patch) {
+        setNotebooks((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+        const { error: saveError } = await supabase.from('notebooks').update(patch).eq('id', id);
+        if (saveError) setError(saveError.message);
+      },
+
       async deleteNotebook(id) {
         setNotebooks((prev) => prev.filter((b) => b.id !== id));
         setNotes((prev) => prev.filter((n) => n.notebook_id !== id));
@@ -400,7 +419,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       async exportNotebook(notebookId) {
         const nb = nbOf(notebookId);
-        const own = notes.filter((n) => n.notebook_id === notebookId).sort(byUpdatedDesc);
+        const own = notes.filter((n) => n.notebook_id === notebookId).sort(inDocument);
         const markdown = [
           `# ${nb?.name ?? 'Notebook'}`,
           `${nb?.code ?? ''} · ${nb?.prof ?? ''} · ${own.length} notes`,

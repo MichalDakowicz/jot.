@@ -2,7 +2,7 @@ import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirro
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { Annotation, EditorState } from '@codemirror/state';
+import { Annotation, EditorState, type Extension, type StateEffect } from '@codemirror/state';
 import {
   drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers,
 } from '@codemirror/view';
@@ -13,15 +13,21 @@ import type { Mentionable } from '@jot/core/markdown';
 import { completions, formatKeys } from './commands';
 import { embeds } from './embeds';
 import { liveMarkdown, setMentions } from './livemd';
-import { titleLine } from './title';
+import { noteHeadings } from './title';
 
 /** Marks a document swapped in from elsewhere, so it is not reported back as an edit. */
 const incoming = Annotation.define<boolean>();
 
 type Props = {
   value: string;
-  /** The whole document, title line included. */
-  onChange: (doc: string) => void;
+  /** The whole document, with the state it came from for anything tracked beside the text. */
+  onChange: (doc: string, state: EditorState) => void;
+  /** Added once, when the editor is made. */
+  extensions?: Extension[];
+  /** Sent along with a copy that arrived from elsewhere, so tracked state can be put back on it. */
+  incomingEffects?: () => StateEffect<unknown>[];
+  /** Where the caret starts, when it should not start at the top. */
+  startAt?: number;
   mentions: Mentionable[];
   onMention: (noteId: string) => void;
   /** Every update that moves the caret, the text or the scroll position. */
@@ -29,12 +35,12 @@ type Props = {
   autoFocus?: boolean;
 };
 
-/** The note as one markdown source document, title first, with a line-number gutter. */
-export function Editor({ value, onChange, mentions, onMention, onView, autoFocus }: Props) {
+/** A markdown source document, every note opening with its "# " title, with a line-number gutter. */
+export function Editor({ value, onChange, mentions, onMention, onView, autoFocus, extensions = [], incomingEffects, startAt }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const latest = useRef({ onChange, onMention, onView });
-  latest.current = { onChange, onMention, onView };
+  const latest = useRef({ onChange, onMention, onView, incomingEffects });
+  latest.current = { onChange, onMention, onView, incomingEffects };
   /**
    * Documents this editor reported and has not seen come back yet. Typing
    * outruns rendering, so the page can hand back an older keystroke's copy
@@ -58,7 +64,8 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
           EditorView.lineWrapping,
           markdown({ base: markdownLanguage }),
           liveMarkdown((id) => latest.current.onMention(id)),
-          titleLine,
+          noteHeadings,
+          ...extensions,
           embeds,
           completions,
           formatKeys,
@@ -67,7 +74,7 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
             if (u.docChanged && !u.transactions.some((tr) => tr.annotation(incoming))) {
               const doc = u.state.doc.toString();
               emitted.current = [...emitted.current.slice(-49), doc];
-              latest.current.onChange(doc);
+              latest.current.onChange(doc, u.state);
             }
             if (u.docChanged || u.selectionSet || u.viewportChanged || u.geometryChanged) latest.current.onView?.(u.view);
           }),
@@ -76,14 +83,14 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
       }),
     });
     view.current = v;
-    // A new note starts with the caret in its title.
-    if (autoFocus) {
-      v.focus();
-      v.dispatch({ selection: { anchor: v.state.doc.line(1).to } });
+    if (startAt !== undefined) {
+      const at = Math.min(startAt, v.state.doc.length);
+      v.dispatch({ selection: { anchor: at }, effects: EditorView.scrollIntoView(at, { y: 'start', yMargin: 64 }) });
     }
+    if (autoFocus) v.focus();
     latest.current.onView?.(v);
     return () => v.destroy();
-    // The view is made once per note; the page remounts it with a key.
+    // The view is made once per document; the page remounts it with a key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -102,7 +109,12 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
     }
     emitted.current = [value];
     const head = Math.min(v.state.selection.main.head, value.length);
-    v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: value }, selection: { anchor: head }, annotations: incoming.of(true) });
+    v.dispatch({
+      changes: { from: 0, to: v.state.doc.length, insert: value },
+      selection: { anchor: head },
+      effects: latest.current.incomingEffects?.() ?? [],
+      annotations: incoming.of(true),
+    });
   }, [value]);
 
   return <div className="editor" ref={host} />;

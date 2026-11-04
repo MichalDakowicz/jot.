@@ -75,7 +75,6 @@
 .tag button:hover { color: var(--danger); }
 .tag-input { width: 12ch; border: 0; outline: 0; background: none; color: var(--text); font-size: 12px; }
 .tag-input::placeholder { color: var(--faint); }
-.notebook-pick { display: inline-flex; align-items: center; gap: 6px; }
 
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 16px; }
 .tag-cloud-item { color: var(--text); }
@@ -84,13 +83,12 @@
 
 .tree-label-row { display: flex; justify-content: space-between; }
 .tree-action { color: var(--faint); text-transform: none; letter-spacing: 0; }
-.fold { display: inline-flex; color: var(--faint); margin-left: -4px; }
-.fold svg { transition: transform 120ms; }
-.fold .turned { transform: rotate(90deg); }
 .row .name a, .row a.name { color: inherit; }
+.row .ext { color: var(--faint); }
+.row.outline { min-height: 22px; font-size: 12px; }
+.outline-mark { color: var(--faint); }
 .status-error { color: var(--danger); }
 
-.danger-zone { padding-top: 20px; border-top: 1px solid var(--line); }
 
 .profile-head { display: flex; align-items: center; gap: 16px; }
 .avatar {

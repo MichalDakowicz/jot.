@@ -55,3 +55,10 @@ describe('ink', () => {
     expect(Object.keys(INK.dark).sort()).toEqual(Object.keys(INK.light).sort());
   });
 });
+
+describe('layoutGraph with untitled notes', () => {
+  it('draws no edge to a note with no title', () => {
+    const { edges } = layoutGraph(300, [book('a', 0)], [note('1', 'a', '', ''), note('2', 'a', 'Cells', 'mail me @ noon')]);
+    expect(edges).toHaveLength(0);
+  });
+});
