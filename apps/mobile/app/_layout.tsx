@@ -29,7 +29,7 @@ function Gate() {
   const group = segments[0] as string | undefined;
 
   useEffect(() => {
-    if (group === 'share') return;
+    if (group === 'share' || group === 'auth') return;
     if (!configured) {
       if (group !== 'setup') router.replace('/setup');
       return;
