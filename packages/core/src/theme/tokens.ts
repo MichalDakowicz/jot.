@@ -41,14 +41,15 @@ export const c = {
   g900: '#272e1b',
 } as const;
 
+/** Monospace throughout, JetBrains Mono (it sets Polish as published); headings take the heaviest cut. */
 export const f = {
-  head: 'JotDisplay',
-  b400: 'Figtree_400Regular',
-  b500: 'Figtree_500Medium',
-  b600: 'Figtree_600SemiBold',
-  b700: 'Figtree_700Bold',
-  b800: 'Figtree_800ExtraBold',
-  mono: 'monospace',
+  head: 'JetBrainsMono_800ExtraBold',
+  b400: 'JetBrainsMono_400Regular',
+  b500: 'JetBrainsMono_500Medium',
+  b600: 'JetBrainsMono_600SemiBold',
+  b700: 'JetBrainsMono_700Bold',
+  b800: 'JetBrainsMono_800ExtraBold',
+  mono: 'JetBrainsMono_400Regular',
 } as const;
 
 export const shadow = {

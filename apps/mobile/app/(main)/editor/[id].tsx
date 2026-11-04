@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LiveField, type LiveFieldHandle } from '../../../components/LiveField';
+import { BlockPrefix } from '../../../components/BlockPrefix';
 import { MarkBar } from '../../../components/MarkBar';
 import { MentionPicker, type MentionHit } from '../../../components/MentionPicker';
 import { NoteMeta } from '../../../components/NoteMeta';
@@ -1060,8 +1061,9 @@ export default function Editor() {
                 ]}
                 {...blockData(i)}
               >
-                <Prefix
+                <BlockPrefix
                   block={block}
+                  line={i + 1}
                   marker={markers[i]}
                   onToggle={() => replace(i, { done: !block.done }, sel.current.start)}
                 />
@@ -1237,29 +1239,6 @@ function TableButton({
   );
 }
 
-/** Bullet, number, letter or checkbox drawn beside the block, not inside it. */
-function Prefix({
-  block,
-  marker,
-  onToggle,
-}: {
-  block: Block;
-  /** The counted marker for a numbered or lettered item, "3." or "c.". */
-  marker: string;
-  onToggle: () => void;
-}) {
-  if (block.kind === 'bullet') return <Text style={styles.bullet}>•</Text>;
-  if (COUNTED.includes(block.kind)) return <Text style={styles.number}>{marker}</Text>;
-  if (block.kind === 'todo') {
-    return (
-      <Pressable onPress={onToggle} hitSlop={8} style={[styles.box, block.done && styles.boxOn]}>
-        {block.done ? <Text style={styles.tick}>✓</Text> : null}
-      </Pressable>
-    );
-  }
-  return null;
-}
-
 const SLASH_KIND: Record<string, BlockKind | undefined> = {
   table: 'table',
   h1: 'h1',
@@ -1362,20 +1341,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  bullet: { fontFamily: f.b700, fontSize: 15, lineHeight: 25, color: c.a600, width: 12 },
-  number: { fontFamily: f.b700, fontSize: 14, lineHeight: 25, color: c.a600, minWidth: 18 },
-  box: {
-    width: 17,
-    height: 17,
-    marginTop: 4,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: c.n400,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boxOn: { backgroundColor: c.g500, borderColor: c.g600 },
-  tick: { fontFamily: f.b800, fontSize: 11, lineHeight: 14, color: c.paper },
 
   // The same wash the browser paints over selected text, so taking a line and
   // taking five read as one thing.

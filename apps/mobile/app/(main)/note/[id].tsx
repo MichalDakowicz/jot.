@@ -5,7 +5,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../../../components/Icon';
 import { Markdown } from '../../../components/Markdown';
 import { NoteMeta } from '../../../components/NoteMeta';
-import { PaperDots } from '../../../components/PaperDots';
 import { PublicShare } from '../../../components/PublicShare';
 import { ReadingNavigation } from '../../../components/ReadingNavigation';
 import { BackLink, Empty, Kicker, Screen } from '../../../components/ui';
@@ -73,7 +72,6 @@ export default function NoteScreen() {
           ? router.push(`/note/${noteId}?section=${blockIndex}`)
           : scroll.current?.scrollTo({ y: Math.max(0, markdownY.current + (headingY.current[blockIndex] ?? 0) - 12), animated: true })} />
     )}>
-      <PaperDots />
 
       <View style={styles.headRow}>
         <BackLink

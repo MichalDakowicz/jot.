@@ -77,7 +77,6 @@ export default function Shelf() {
                   pressed && shadow.md,
                 ]}
               >
-                <Blob size={104} color={tone.tint} opacity={0.55} style={styles.cardBlob} />
                 <Text style={[styles.code, { color: tone.dark }]}>{nb.code}</Text>
                 <View style={{ gap: 5 }}>
                   <Text style={styles.name} numberOfLines={2}>
@@ -168,7 +167,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow.sm,
   },
-  cardBlob: { position: 'absolute', right: -26, top: -22 },
   code: { fontFamily: f.b800, fontSize: 10.5, letterSpacing: 1 },
   name: { fontFamily: f.head, fontSize: 17.5, lineHeight: 22, color: c.text },
   count: { fontFamily: f.b600, fontSize: 12, color: c.n600 },

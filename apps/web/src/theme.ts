@@ -15,7 +15,7 @@ function cssFor(ink: Ink): string {
 export function installTheme() {
   const style = document.createElement('style');
   style.textContent = `
-    :root{--logo-tile:${INK.dark.bg};--logo-letter:${INK.dark.text};--logo-caret:${INK.dark.accent};--mono:${MONO.family};--h1:${MONO.h[0]}em;--h2:${MONO.h[1]}em;--h3:${MONO.h[2]}em;--h4:${MONO.h[3]}em;${cssFor(INK.light)}color-scheme:light}
+    :root{--mono:${MONO.family};--h1:${MONO.h[0]}em;--h2:${MONO.h[1]}em;--h3:${MONO.h[2]}em;--h4:${MONO.h[3]}em;${cssFor(INK.light)}color-scheme:light}
     :root[data-scheme="dark"]{${cssFor(INK.dark)}color-scheme:dark}
   `;
   document.head.prepend(style);
