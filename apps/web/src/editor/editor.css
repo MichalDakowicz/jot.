@@ -4,12 +4,8 @@
 
 .note-column { min-width: 0; padding: 22px 0 80px; }
 
-.note-head { padding: 0 32px 10px 62px; }
 
 
-.note-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: var(--muted); font-size: 12px; }
-.note-meta select { background: none; border: 0; color: var(--muted); padding: 0; cursor: pointer; }
-.note-meta select:hover { color: var(--text); }
 
 .editor .cm-editor { background: transparent; color: var(--text); font-size: 14px; }
 .editor .cm-editor.cm-focused { outline: none; }
@@ -80,6 +76,21 @@
 .cm-panels { background: var(--pane) !important; color: var(--text) !important; border-color: var(--line) !important; }
 .cm-searchMatch { background: var(--mark) !important; }
 
+/* ---------- the note under the caret, and the notebook's own settings ---------- */
+
+.note-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; flex: none;
+  min-height: 34px; padding: 4px 16px 4px 62px; border-bottom: 1px solid var(--line);
+  background: var(--pane); color: var(--muted); font-size: 12px;
+}
+.note-bar-title { color: var(--text); font-weight: 700; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.note-bar-links { display: inline-flex; gap: 10px; color: var(--faint); }
+.note-bar-links a { color: var(--link); }
+.note-bar-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.notebook-head { margin: 0 32px 6px 62px; font-size: 12px; min-height: 1em; }
+.notebook-settings { margin: 0 32px 18px 62px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
+.crumb-note { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ---------- minimap ---------- */
 
 /* The column keeps its width; the panel inside it grows left over the editor while hovered. */
@@ -104,16 +115,12 @@
 .minimap-line:hover { color: var(--text); }
 .minimap-view { position: absolute; left: 0; right: 0; background: var(--raised); opacity: 0.6; pointer-events: none; }
 
-.references { margin: 28px 32px 0 62px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; }
-.references h2 { margin: 0 0 6px; color: var(--faint); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
-.references ul { list-style: none; margin: 0 0 14px; padding: 0; }
-.references li a { color: var(--link); }
 
 @media (max-width: 899px) {
   .note-layout { grid-template-columns: minmax(0, 1fr); }
+  .note-bar { padding-left: 16px; }
+  .notebook-head, .notebook-settings { margin-left: 16px; margin-right: 16px; }
   .minimap { display: none; }
-  .note-head { padding: 0 16px 10px 40px; }
   .editor .cm-lineNumbers .cm-gutterElement { min-width: 30px; padding-right: 4px; font-size: 11px; }
   .editor .cm-line { padding: 0 16px 0 8px; }
-  .references { margin: 24px 16px 0 40px; }
 }

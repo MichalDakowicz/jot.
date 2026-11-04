@@ -110,6 +110,31 @@ begin
 end
 $$;
 
+-- A notebook reads as one document, its notes in order. Existing notes take
+-- the order they were written in; filling the column is not an edit either.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'notes' and column_name = 'position'
+  ) then
+    return;
+  end if;
+
+  alter table public.notes add column position integer not null default 0;
+
+  alter table public.notes disable trigger notes_touch_updated_at;
+  update public.notes n
+  set position = ranked.pos
+  from (
+    select id, row_number() over (partition by notebook_id order by created_at, id) - 1 as pos
+    from public.notes
+  ) ranked
+  where ranked.id = n.id;
+  alter table public.notes enable trigger notes_touch_updated_at;
+end
+$$;
+
 -- ─────────────────────────────────────── a profile row for every signup
 
 create or replace function public.handle_new_user()

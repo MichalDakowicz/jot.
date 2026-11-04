@@ -39,8 +39,12 @@ tag, notebook export, sign out.
 An editor for notes: slate dark or paper light (following the system), one
 sage accent, lavender for links, everything set in **JetBrains Mono**, which
 covers Polish. Markdown is edited as source that sets itself — a heading line
-is set large and keeps its `#`, muted, in front. The title is the first line,
-the note's one `# ` heading. On the web the note sits in a
+is set large and keeps its `#`, muted, in front. On the web a notebook is a
+single file: each note is a `# Title` section in it, so a new note is just a
+new `# ` line, and the sidebar lists notebooks as files with the open one's
+notes as an outline. The bar under the top shows the note the caret is in —
+its tags, its own public link, its links — and **notebook** opens the
+notebook's name, course code, teacher, colour, class times and sharing. On the web the note sits in a
 CodeMirror editor with line numbers, embeds under image, video and link lines,
 and a minimap beside it that swells into readable text under the pointer.
 Share pages drop all of that and render the note for reading.

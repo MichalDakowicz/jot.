@@ -26,6 +26,8 @@ export type Note = {
   body: string;
   /** Lower case, no "#"; set in the row under the title, not in the body. */
   tags: string[];
+  /** Order within its notebook, which reads as one document. */
+  position?: number;
   created_at: string;
   updated_at: string;
 };
