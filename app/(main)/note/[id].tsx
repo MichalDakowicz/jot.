@@ -1,11 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '../../../components/Icon';
 import { Markdown } from '../../../components/Markdown';
 import { NoteMeta } from '../../../components/NoteMeta';
 import { PaperDots } from '../../../components/PaperDots';
+import { PublicShare } from '../../../components/PublicShare';
+import { ReadingNavigation } from '../../../components/ReadingNavigation';
 import { BackLink, Empty, Kicker, Screen } from '../../../components/ui';
 import { confirmDestructive } from '../../../lib/confirm';
 import { useFittedDisplaySize } from '../../../lib/fit';
@@ -14,10 +16,21 @@ import { useStore } from '../../../lib/store';
 import { c, f, tintOf } from '../../../theme/tokens';
 
 export default function NoteScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, section } = useLocalSearchParams<{ id: string; section?: string }>();
   const router = useRouter();
   const wide = useIsWide();
-  const { noteById, notebookById, mentionables, linksOf, backlinksOf, deleteNote } = useStore();
+  const { notes, noteById, notebookById, mentionables, linksOf, backlinksOf, deleteNote } = useStore();
+  const scroll = useRef<ScrollView>(null);
+  const markdownY = useRef(0);
+  const headingY = useRef<Record<number, number>>({});
+  const measuredNote = useRef<string | null>(null);
+  const requestedSection = section !== undefined && /^\d+$/.test(section) ? Number(section) : null;
+  function jumpToRequestedSection() {
+    if (requestedSection !== null && measuredNote.current === id && headingY.current[requestedSection] !== undefined) {
+      scroll.current?.scrollTo({ y: Math.max(0, markdownY.current + headingY.current[requestedSection] - 12), animated: true });
+    }
+  }
+  useEffect(jumpToRequestedSection, [id, section]);
 
   const note = noteById(id);
   const title = useFittedDisplaySize(note?.title ?? '', 27, 17);
@@ -51,7 +64,15 @@ export default function NoteScreen() {
   }
 
   return (
-    <Screen gap={14}>
+    <Screen gap={14} scrollRef={scroll} toolbar={(sidebar) => (
+      <ReadingNavigation key={note.id} fillHeight={sidebar}
+        notes={notes.map((item) => ({ ...item, subtitle: notebookById(item.notebook_id)?.name }))}
+        currentId={note.id}
+        onNote={(noteId) => noteId === note.id ? scroll.current?.scrollTo({ y: 0, animated: true }) : router.push(`/note/${noteId}`)}
+        onSection={(noteId, blockIndex) => noteId !== note.id
+          ? router.push(`/note/${noteId}?section=${blockIndex}`)
+          : scroll.current?.scrollTo({ y: Math.max(0, markdownY.current + (headingY.current[blockIndex] ?? 0) - 12), animated: true })} />
+    )}>
       <PaperDots />
 
       <View style={styles.headRow}>
@@ -82,8 +103,13 @@ export default function NoteScreen() {
 
       <NoteMeta note={note} notebook={nb} />
 
+      <PublicShare key={note.id} kind="note" id={note.id} published={!!note.is_public} inherited={!!nb?.is_public} />
+
       <Markdown
+        key={note.id}
         source={note.body}
+        onLayout={(y) => { markdownY.current = y; measuredNote.current = id; jumpToRequestedSection(); }}
+        onHeadingLayout={(blockIndex, y) => { headingY.current[blockIndex] = y; jumpToRequestedSection(); }}
         mentions={mentionables}
         onMention={(noteId) => router.push(`/note/${noteId}`)}
       />
