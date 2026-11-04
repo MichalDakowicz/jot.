@@ -11,10 +11,10 @@ import opentype from 'opentype.js';
 import sharp from 'sharp';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const FONT = path.join(ROOT, 'assets/fonts/JotDisplay-Regular.ttf');
-const ASSETS = path.join(ROOT, 'assets');
+const FONT = path.join(ROOT, 'apps/mobile/assets/fonts/JotDisplay-Regular.ttf');
+const ASSETS = path.join(ROOT, 'apps/mobile/assets');
 /** Copied into the export root verbatim, so these keep the paths the HTML names. */
-const PUBLIC = path.join(ROOT, 'public');
+const PUBLIC = path.join(ROOT, 'apps/mobile/public');
 
 const TILE = '#c67139';
 const LETTER = '#fffdf9';

@@ -15,8 +15,8 @@ import path from 'node:path';
 import opentype from 'opentype.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const SRC = path.join(ROOT, 'assets/fonts/Caprasimo-Regular.ttf');
-const OUT = path.join(ROOT, 'assets/fonts/JotDisplay-Regular.ttf');
+const SRC = path.join(ROOT, 'apps/mobile/assets/fonts/Caprasimo-Regular.ttf');
+const OUT = path.join(ROOT, 'apps/mobile/assets/fonts/JotDisplay-Regular.ttf');
 
 const font = opentype.parse(fs.readFileSync(SRC).buffer.slice(0));
 

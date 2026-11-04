@@ -1,59 +1,25 @@
 {
   "name": "jot",
   "version": "1.0.0",
-  "main": "index.ts",
-  "dependencies": {
-    "@expo-google-fonts/figtree": "^0.4.1",
-    "@react-native-async-storage/async-storage": "2.2.0",
-    "@supabase/supabase-js": "^2.113.0",
-    "@tiptap/core": "^3.31.4",
-    "@tiptap/extension-highlight": "^3.31.4",
-    "@tiptap/extension-list": "^3.31.4",
-    "@tiptap/extension-table": "^3.31.4",
-    "@tiptap/extensions": "^3.31.4",
-    "@tiptap/pm": "^3.31.4",
-    "@tiptap/react": "^3.31.4",
-    "@tiptap/starter-kit": "^3.31.4",
-    "@tiptap/suggestion": "^3.31.4",
-    "expo": "~57.0.19",
-    "expo-constants": "~57.0.17",
-    "expo-font": "~57.0.3",
-    "expo-haptics": "~57.0.2",
-    "expo-image-picker": "~57.0.15",
-    "expo-linear-gradient": "~57.0.1",
-    "expo-linking": "~57.0.9",
-    "expo-router": "~57.0.18",
-    "expo-secure-store": "~57.0.3",
-    "expo-status-bar": "~57.0.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.86.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0",
-    "react-native-svg": "15.15.4",
-    "react-native-url-polyfill": "^4.0.0",
-    "react-native-web": "^0.21.2"
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:sharing": "node scripts/test-public-sharing.mjs",
+    "mobile": "npm run start -w @jot/mobile",
+    "android": "npm run android -w @jot/mobile",
+    "font": "node scripts/build-display-font.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.8",
-    "@types/react": "~19.2.2",
-    "@types/react-dom": "~19.2.0",
     "firebase-tools": "^15.30.1",
     "opentype.js": "^2.0.0",
     "sharp": "^0.35.4",
-    "typescript": "~6.0.3",
-    "vitest": "^5.0.1"
-  },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "typecheck": "tsc --noEmit",
-    "web": "expo start --web",
-    "font": "node scripts/build-display-font.mjs",
-    "icons": "node scripts/make-icons.mjs",
-    "test": "vitest run",
-    "test:sharing": "node scripts/test-public-sharing.mjs"
-  },
-  "private": true
+    "typescript": "~6.0.3"
+  }
 }

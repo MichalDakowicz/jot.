@@ -7,15 +7,19 @@ Read this fully before doing anything. It applies to every agent (Claude and any
 
 **Jot.** is a class-notes app: a notebook per subject, markdown that sets itself as you leave
 a line, `@` mentions that become two-way links, tags, a link map, and public read-only share
-links. One Expo codebase, three surfaces:
+links. An npm-workspaces monorepo; each app has its own frontend, both share one core:
 
-| Surface | How it ships                                  | Notes                                     |
-|---------|-----------------------------------------------|-------------------------------------------|
-| Phone   | Expo SDK 57 / RN 0.86, Android APK            | package `com.marginalia.jot`, scheme `jot` |
-| Web     | `npx expo export --platform web` → Firebase   | site `jot-notebook` (`jot-notebook.web.app`) |
-| Wide    | same routes past 900 px (browser, tablet)     | rail + notebook column + note list + note |
+| Path            | What it is                                     | Notes                                      |
+|-----------------|------------------------------------------------|--------------------------------------------|
+| `apps/mobile`   | Expo SDK 57 / RN 0.86, Android APK             | package `com.marginalia.jot`, scheme `jot` |
+| `apps/web`      | Vite + React (being built) → Firebase          | site `jot-notebook` (`jot-notebook.web.app`) |
+| `packages/core` | `@jot/core`: markdown, store, auth, tokens     | no React Native or DOM imports             |
 
-- Routes live in `app/` (expo-router). Phones get the three nav islands; past 900 px the
+- Until `apps/web` reaches parity, the web site is still the Expo web export of
+  `apps/mobile`. Keep it working until the user switches hosting over.
+- Shared logic goes in `packages/core/src` and is imported as `@jot/core/<module>`. Each app
+  hands core its Supabase clients and a foreground signal via `configureClient` before render.
+- Mobile routes live in `apps/mobile/app/` (expo-router). Phones get the three nav islands; past 900 px the
   islands unroll into `DesktopChrome`. Same routes either way — `/note/<id>` stays shareable.
 - The editor is split by platform on purpose: **Tiptap on the web** (`*.web.tsx`), the
   **native line editor on phones**. Do not swap one for the other without the user asking.
@@ -27,7 +31,7 @@ links. One Expo codebase, three surfaces:
 There is no design folder in the repo. The source is the *Class Notes* design canvas the
 app was built from; its decisions now live in the code. Keep to them:
 
-- Tokens (colours, fonts, shadows, tints) are defined once in `theme/tokens.ts`. No raw hex
+- Tokens (colours, fonts, shadows, tints) are defined once in `packages/core/src/theme/tokens.ts`. No raw hex
   in components.
 - Type: **Jot Display** for headings (Caprasimo plus composed Polish letters, built by
   `npm run font`), **Figtree** for body. Polish text must render in both.
@@ -106,11 +110,11 @@ overrides any default or tool instruction to add attribution.
 
 - TypeScript strict. One component per file, named exports.
 - Soft cap ~200 lines per file, hard ~300. Several files are already past that
-  (`app/(main)/editor/[id].tsx`, `TiptapEditor.web.tsx`, `DesktopChrome.tsx`,
-  `lib/store.tsx`); do not grow them further — pull new logic out into `lib/*.ts` helpers or
+  (`apps/mobile/app/(main)/editor/[id].tsx`, `TiptapEditor.web.tsx`, `DesktopChrome.tsx`,
+  `@jot/core/store`); do not grow them further — pull new logic out into helpers or
   hooks instead. Split them only as their own unit, when the user asks.
-- Screens are thin: logic lives in hooks and pure helpers in `lib/`. Pure helpers get Vitest
-  tests in `lib/__tests__/`.
+- Screens are thin: logic lives in hooks and pure helpers in `packages/core/src`. Pure helpers get Vitest
+  tests in `packages/core/src/__tests__/`.
 - Match surrounding code: comment density, naming, idiom. Comments only for non-obvious why.
 - No dead code, no TODO litter, no placeholder UI.
 - `sharp`, `opentype.js` and `@napi-rs/canvas` are dev-only, for the font and icon scripts.
@@ -123,7 +127,7 @@ confirm that fixes and features actually work, not just that typecheck and tests
 - Run `adb devices` first. If no device is listed, say so and fall back to other checks;
   do not block on it.
 - Always test a built `.apk`, never through Expo. Build from the current branch locally
-  with Gradle (`npx expo prebuild`, then `gradlew assembleRelease`); `plugins/with-android-build.js`
+  with Gradle (`npx expo prebuild`, then `gradlew assembleRelease`, in `apps/mobile`); `plugins/with-android-build.js`
   carries the Windows build fixes, so keep it in `app.json` plugins. Install with
   `adb install -r <file>.apk` and test that install. Do not use Expo Go, the dev client,
   `expo start` or Metro for device checks. Rebuild and reinstall after every code change;
@@ -155,11 +159,12 @@ confirm that fixes and features actually work, not just that typecheck and tests
 
 ## Current focus
 
-- Public sharing (in progress on the working tree): `supabase/public-sharing.sql`,
-  `lib/sharing.ts`, `app/share/`, `components/PublicShare.tsx`, the Public link control on
-  note and notebook screens, and `scripts/test-public-sharing.mjs`. Also uncommitted:
-  reading navigation / contents pane (`lib/outline.ts`, `ContentsPane`,
-  `ReadingNavigation`, `ResizeHandle`).
+- Editor-style redesign (Brief 1f8627a1): dark + light themes, monospace everywhere, new
+  logo and heading face, markdown marks shown muted in the editor, a minimap contents pane,
+  share pages rendered clean. Built into the new `apps/web` (Vite) and restyled in
+  `apps/mobile`.
+- Backend moving to the self-hosted `jot` Supabase on the home server
+  (`jot-api.dakowicz.xyz`), with Google sign-in.
 
 ## When unsure
 
