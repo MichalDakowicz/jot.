@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LogoLockup } from '../components/Logo';
+import { LogoMark } from '../components/Logo';
 import { useAuth } from '@jot/core/auth';
 import { signInWithGoogle } from '../lib/google';
 import { c, f } from '@jot/core/theme/tokens';
@@ -86,7 +86,7 @@ export default function SignIn() {
       >
 
         <View style={{ gap: 14 }}>
-          <LogoLockup markSize={58} wordSize={26} />
+          <LogoMark size={52} />
           <Text style={styles.brandText}>class notes, linked</Text>
           <Text style={styles.title}>
             {mode === 'in' ? 'Open your notebooks' : 'Start your notebooks'}

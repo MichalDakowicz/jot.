@@ -46,6 +46,12 @@ export const mentionsField = StateField.define<Mentionable[]>({
 });
 
 const HIGHLIGHT = /==(?=\S)(.+?\S)==/g;
+/**
+ * A line of only dashes, stars or underscores is a rule, the way Jot's own
+ * parser reads it — even under a paragraph, where markdown would take it for
+ * a heading underline.
+ */
+const RULE_LINE = /^\s*([-*_])(\s*\1){2,}\s*$/;
 
 function build(view: EditorView): DecorationSet {
   const found: { from: number; to: number; deco: Decoration }[] = [];
@@ -73,6 +79,12 @@ function build(view: EditorView): DecorationSet {
         }
       },
     });
+
+    for (let pos = from; pos <= to;) {
+      const l = doc.lineAt(pos);
+      if (RULE_LINE.test(l.text)) found.push({ from: l.from, to: l.from, deco: LINES.HorizontalRule });
+      pos = l.to + 1;
+    }
 
     const text = doc.sliceString(from, to);
     for (const m of text.matchAll(HIGHLIGHT)) {

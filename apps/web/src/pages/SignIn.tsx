@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { useAuth } from '@jot/core/auth';
 
-import { LogoMark, Wordmark } from '../components/Logo';
+import { LogoMark } from '../components/Logo';
 
 /** Google, or email and password; one form for both signing in and signing up. */
 export function SignIn() {
@@ -43,7 +43,7 @@ export function SignIn() {
 
   return (
     <div className="solo">
-      <header className="solo-head"><span className="brand"><LogoMark size={22} /><Wordmark /></span></header>
+      <header className="solo-head"><span className="brand"><LogoMark size={26} /></span></header>
       <main className="solo-body narrow">
         <h1 className="solo-title">{mode === 'in' ? 'Sign in' : 'Make an account'}</h1>
         <p className="muted">class notes, linked</p>

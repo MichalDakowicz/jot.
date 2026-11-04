@@ -64,7 +64,7 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
-.explorer-head .path { color: var(--muted); font-size: 12px; }
+
 
 .tree { flex: 1; overflow-y: auto; padding: 8px 0; }
 
@@ -137,12 +137,17 @@ button {
 
 .statusbar .right { margin-left: auto; display: flex; gap: 18px; }
 .statusbar .ok { color: var(--accent); }
+.status-button { color: var(--muted); font-size: 12px; }
+.status-button:hover { color: var(--text); }
+.status-button.on { color: var(--accent); }
 
-.menu-button { display: none; }
+.shell.rail-hidden { grid-template-columns: 0 minmax(0, 1fr); }
+.shell.rail-hidden .explorer { visibility: hidden; border: 0; }
 .scrim { display: none; }
 
 @media (max-width: 899px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+  .shell, .shell.rail-hidden { grid-template-columns: minmax(0, 1fr); }
+  .shell.rail-hidden .explorer { visibility: visible; border-right: 1px solid var(--line); }
   .explorer {
     position: fixed;
     inset: 0 auto 26px 0;
@@ -153,7 +158,6 @@ button {
   }
   .shell.drawer .explorer { transform: none; }
   .shell.drawer .scrim { display: block; position: fixed; inset: 0; z-index: 10; background: rgb(0 0 0 / 0.35); }
-  .menu-button { display: inline-flex; }
   .main { grid-column: 1; }
   .page { padding: 20px 16px 56px; }
   .statusbar .wide-only { display: none; }

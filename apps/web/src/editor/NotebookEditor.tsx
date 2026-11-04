@@ -13,7 +13,7 @@ import { useNotebookDoc } from './useNotebookDoc';
 export function NotebookEditor({ notebookId, notes, startNote, onMention, onView }: {
   notebookId: string;
   notes: Note[];
-  /** The note to open at, for a link to one note. */
+  /** The note to open at, for a link to one note; otherwise the end. */
   startNote: string | null;
   onMention: (noteId: string) => void;
   onView: (view: EditorView) => void;
@@ -23,9 +23,11 @@ export function NotebookEditor({ notebookId, notes, startNote, onMention, onView
   // Made once per notebook: later ids arrive with copies from elsewhere.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const extensions = useMemo(() => [notebookSections(ids)], [notebookId]);
+  // A notebook opens at its end, where the newest note is; a link to one note opens at that note.
   const startAt = useMemo(() => {
     const k = startNote ? notes.findIndex((n) => n.id === startNote) : -1;
-    return k > 0 ? notebookDocOf(notes.slice(0, k)).length + 1 : undefined;
+    if (k === 0) return 0;
+    return k > 0 ? notebookDocOf(notes.slice(0, k)).length + 1 : value.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notebookId]);
 

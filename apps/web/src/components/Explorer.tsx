@@ -5,7 +5,7 @@ import { useStore } from '@jot/core/store';
 
 import { useScheme } from '../theme';
 import { Icon, type IconName } from './Icon';
-import { LogoMark, Wordmark } from './Logo';
+import { LogoMark } from './Logo';
 import { NotebookDot } from './NotebookDot';
 
 const PLACES: { to: string; label: string; icon: IconName }[] = [
@@ -28,8 +28,6 @@ export function Explorer() {
     <aside className="explorer" aria-label="Explorer">
       <Link to="/today" className="explorer-head">
         <LogoMark size={22} />
-        <Wordmark />
-        <span className="path">~/notes</span>
       </Link>
       <div className="tree">
         {PLACES.map((p) => (

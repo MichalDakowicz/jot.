@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 
 import { ONBOARDING } from '@jot/core/seed';
 
-import { LogoMark, Wordmark } from '../components/Logo';
+import { LogoMark } from '../components/Logo';
 
 const KEY = 'marginalia.onboarded';
 
@@ -38,7 +38,7 @@ export function Onboarding() {
   return (
     <div className="solo">
       <header className="solo-head">
-        <span className="brand"><LogoMark size={22} /><Wordmark /></span>
+        <span className="brand"><LogoMark size={26} /></span>
         <button className="link-button" onClick={done}>skip</button>
       </header>
       <main className="solo-body">

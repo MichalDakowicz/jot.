@@ -4,15 +4,18 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { Annotation, EditorState, type Extension, type StateEffect } from '@codemirror/state';
 import {
-  drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers,
+  drawSelection, EditorView, highlightActiveLineGutter, keymap, lineNumbers,
 } from '@codemirror/view';
 import React, { useEffect, useRef } from 'react';
 
 import type { Mentionable } from '@jot/core/markdown';
 
+import { caretLine } from './caretLine';
 import { completions, formatKeys } from './commands';
 import { embeds } from './embeds';
+import { noteFolding } from './folds';
 import { liveMarkdown, setMentions } from './livemd';
+import { alignedTables } from './tables';
 import { noteHeadings } from './title';
 
 /** Marks a document swapped in from elsewhere, so it is not reported back as an edit. */
@@ -56,7 +59,7 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
         extensions: [
           lineNumbers(),
           highlightActiveLineGutter(),
-          highlightActiveLine(),
+          caretLine,
           drawSelection(),
           history(),
           closeBrackets(),
@@ -67,6 +70,8 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
           noteHeadings,
           ...extensions,
           embeds,
+          alignedTables,
+          noteFolding,
           completions,
           formatKeys,
           keymap.of([indentWithTab, ...closeBracketsKeymap, ...completionKeymap, ...searchKeymap, ...historyKeymap, ...defaultKeymap]),
@@ -85,7 +90,7 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
     view.current = v;
     if (startAt !== undefined) {
       const at = Math.min(startAt, v.state.doc.length);
-      v.dispatch({ selection: { anchor: at }, effects: EditorView.scrollIntoView(at, { y: 'start', yMargin: 64 }) });
+      v.dispatch({ selection: { anchor: at }, effects: EditorView.scrollIntoView(at, { y: at === v.state.doc.length ? 'end' : 'start', yMargin: 64 }) });
     }
     if (autoFocus) v.focus();
     latest.current.onView?.(v);

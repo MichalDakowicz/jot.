@@ -49,7 +49,8 @@ CodeMirror editor with line numbers, embeds under image, video and link lines,
 and a minimap beside it that swells into readable text under the pointer.
 Share pages drop all of that and render the note for reading.
 
-The mark is a monospace "j" with its block cursor on the slate tile. Its
+The mark is a monospace "j" with a square cursor on the slate tile, shown
+without a wordmark. Its
 geometry and colours are in `packages/core/src/theme/logo.json`; both apps
 draw from it, and so does the icon script:
 

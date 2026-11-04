@@ -36,7 +36,8 @@
     "./theme/scheme": "./src/theme/scheme.ts",
     "./theme/logo": "./src/theme/logo.ts",
     "./oauth": "./src/oauth.ts",
-    "./notebookDoc": "./src/notebookDoc.ts"
+    "./notebookDoc": "./src/notebookDoc.ts",
+    "./tables": "./src/tables.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
