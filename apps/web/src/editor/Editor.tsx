@@ -1,7 +1,7 @@
 import { closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
 import { Annotation, EditorState, type Extension, type StateEffect } from '@codemirror/state';
 import {
   drawSelection, EditorView, highlightActiveLineGutter, keymap, lineNumbers,
@@ -13,7 +13,8 @@ import type { Mentionable } from '@jot/core/markdown';
 import { caretLine } from './caretLine';
 import { completions, formatKeys } from './commands';
 import { embeds } from './embeds';
-import { noteFolding } from './folds';
+import { onlyNewest } from './newest';
+import { editorShortcuts } from './shortcuts';
 import { liveMarkdown, setMentions } from './livemd';
 import { alignedTables } from './tables';
 import { noteHeadings } from './title';
@@ -64,6 +65,8 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
           history(),
           closeBrackets(),
           highlightSelectionMatches(),
+          // Find sits at the top, where a code editor keeps it.
+          search({ top: true }),
           EditorView.lineWrapping,
           markdown({ base: markdownLanguage }),
           liveMarkdown((id) => latest.current.onMention(id)),
@@ -71,7 +74,8 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
           ...extensions,
           embeds,
           alignedTables,
-          noteFolding,
+          onlyNewest,
+          editorShortcuts,
           completions,
           formatKeys,
           keymap.of([indentWithTab, ...closeBracketsKeymap, ...completionKeymap, ...searchKeymap, ...historyKeymap, ...defaultKeymap]),
