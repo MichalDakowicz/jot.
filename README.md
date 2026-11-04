@@ -114,9 +114,10 @@ PostgreSQL engine, including anonymous access, write protection, and revocation.
    npm run mobile           # expo start in apps/mobile
    ```
 
-   The `.env` lives in `apps/mobile/`. Press `a` for Android or `w` for the
-   browser. `npx expo export --platform web`, run in `apps/mobile`, builds the
-   current static site.
+   The phone's `.env` lives in `apps/mobile/`, the web's in `apps/web/`
+   (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). `npm run web` starts the
+   web app; `npm run deploy -w @jot/web` builds it and publishes it to
+   `jot-notebook.web.app`.
 
 On the first sign-in the Today screen offers to fill five notebooks with the
 sample term from the design (nine linked notes, tags, a Mon–Fri timetable), or
