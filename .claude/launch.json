@@ -8,13 +8,10 @@
         "run",
         "dev",
         "-w",
-        "@jot/web",
-        "--",
-        "--port",
-        "5173",
-        "--strictPort"
+        "@jot/web"
       ],
-      "port": 5173
+      "port": 5180,
+      "autoPort": false
     },
     {
       "name": "mobile-web",

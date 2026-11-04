@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import { useStore } from '@jot/core/store';
@@ -21,18 +21,56 @@ export function useStatus(status: Status, deps: unknown[]) {
   }, deps);
 }
 
+const RAIL_KEY = 'jot.explorer';
+
+function readHidden(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === 'hidden';
+  } catch {
+    return false;
+  }
+}
+
 /** Explorer · main, with the status bar under both, the way an editor sits. */
 export function Shell({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>({});
   const [drawer, setDrawer] = useState(false);
+  const [hidden, setHidden] = useState(readHidden);
   const { error, dismissError, loading } = useStore();
   const { pathname } = useLocation();
   useEffect(() => setDrawer(false), [pathname]);
 
+  // Wide, the explorer folds away and stays that way; narrow, it is a drawer that opens over the page.
+  const toggle = useCallback(() => {
+    if (matchMedia('(max-width: 899px)').matches) {
+      setDrawer((d) => !d);
+      return;
+    }
+    setHidden((h) => {
+      try {
+        if (h) localStorage.removeItem(RAIL_KEY);
+        else localStorage.setItem(RAIL_KEY, 'hidden');
+      } catch { /* A private window forgets it next visit. */ }
+      return !h;
+    });
+  }, []);
+
+  // Ctrl/⌘-B, as in a code editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggle();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toggle]);
+
   return (
     <StatusContext.Provider value={setStatus}>
-      <DrawerContext.Provider value={() => setDrawer((d) => !d)}>
-        <div className={'shell' + (drawer ? ' drawer' : '')}>
+      <DrawerContext.Provider value={toggle}>
+        <div className={'shell' + (drawer ? ' drawer' : '') + (hidden ? ' rail-hidden' : '')}>
           <Explorer />
           <div className="scrim" onClick={() => setDrawer(false)} />
           <div className="main">{children}</div>
@@ -56,7 +94,7 @@ export function TopBar({ crumbs, actions }: { crumbs: React.ReactNode; actions?:
   const toggle = useContext(DrawerContext);
   return (
     <header className="topbar">
-      <button className="icon-button menu-button" onClick={toggle} aria-label="Open the explorer">
+      <button className="icon-button menu-button" onClick={toggle} aria-label="Show or hide the explorer" title="Explorer (Ctrl+B)">
         <Icon name="menu" />
       </button>
       <nav className="crumbs">{crumbs}</nav>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LogoWord } from '../components/Logo';
+import { LogoMark } from '../components/Logo';
 import { useOnboarding } from '../lib/onboarding';
 import { ONBOARDING } from '@jot/core/seed';
 import { c, f, shadow } from '@jot/core/theme/tokens';
@@ -24,7 +24,7 @@ export default function Onboarding() {
     <View style={[styles.screen, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 30 }]}>
 
       <View style={styles.head}>
-        <LogoWord size={22} color={c.a900} stopColor={c.accent} />
+        <LogoMark size={30} />
         <Pressable onPress={finish} hitSlop={10}>
           <Text style={styles.skip}>Skip</Text>
         </Pressable>

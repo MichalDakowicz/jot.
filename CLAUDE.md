@@ -44,12 +44,14 @@ An editor for notes: a code/doc editor's calm, after the Digital Meadow referenc
   brings it back with the same id). Notes stay rows of their own, ordered by `notes.position`;
   `@jot/core/notebookDoc` splits and joins, `apps/web/src/editor/sections.ts` tracks which
   heading is which note. The phone still edits one note at a time.
-  `---` draws a full-width dashed rule.
+  `---` runs on to the column edge in the same typed dash. Tables show as even grids (padded
+  cells, dashed header rule) while the caret is outside them; their source is never rewritten.
+  Ctrl/⌘-B toggles the sidebar, so bold is Ctrl/⌘-Shift-B. A notebook opens at its end.
   The web editor is CodeMirror (`apps/web/src/editor`); the phone keeps its native block
   editor and shows block marks muted with a slim block-number gutter.
 - Beside a note on the web: a minimap that swells into readable lines under the pointer.
 - Share pages are rendered for reading: no marks, gutter or map.
-- Logo: a monospace "j" and its block cursor on the slate tile; geometry and colours in
+- Logo: a monospace "j" and a square cursor on the slate tile, never with text beside it; geometry and colours in
   `packages/core/src/theme/logo.json`. `npm run icons` regenerates every icon from it.
   Never hand-edit the generated icon PNGs.
 - Flat: panes are told apart by their ground and hairlines, not shadows. No decorative shapes.

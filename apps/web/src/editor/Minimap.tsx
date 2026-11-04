@@ -10,7 +10,9 @@ type Props = {
   scroller: HTMLElement | null;
 };
 
-const MAX = 18;
+const MAX = 20;
+/** Every line a few pixels tall, whatever the note's length: a long note slides past, like a code editor's map. */
+const BASE = 4;
 const RADIUS = 7;
 
 /**
@@ -56,7 +58,7 @@ export function Minimap({ view, tick, scroller }: Props) {
   }, [view, tick]);
   const caretLine = view ? view.state.doc.lineAt(view.state.selection.main.head).number - 1 : -1;
 
-  const base = Math.max(2, Math.min(5, height / Math.max(1, lines.length)));
+  const base = BASE;
   const total = base * lines.length;
   // A long note is taller than the pane: the map slides with the page, like an editor's.
   const slide = total > height ? scroll.top / Math.max(0.0001, 1 - scroll.span) * (total - height) : 0;

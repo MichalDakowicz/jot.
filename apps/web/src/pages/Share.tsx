@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router';
 import { loadPublic, type PublicContent } from '@jot/core/publicContent';
 import { relative } from '@jot/core/time';
 
-import { LogoMark, Wordmark } from '../components/Logo';
+import { LogoMark } from '../components/Logo';
 import { Markdown } from '../components/Markdown';
 
 /**
@@ -40,7 +40,7 @@ export function SharePage() {
   return (
     <div className="share">
       <header className="share-head">
-        <a href="/" className="share-brand"><LogoMark size={20} /><Wordmark /></a>
+        <a href="/" className="share-brand"><LogoMark size={24} /></a>
         <span className="muted">read-only</span>
       </header>
       <main className="share-body">

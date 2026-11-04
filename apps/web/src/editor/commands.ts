@@ -25,7 +25,8 @@ export function toggleWrap(view: EditorView, mark: string): boolean {
 }
 
 export const formatKeys: Extension = keymap.of([
-  { key: 'Mod-b', run: (v) => toggleWrap(v, '**') },
+  // Ctrl/⌘-B belongs to the sidebar, as in a code editor; bold takes Shift with it.
+  { key: 'Mod-Shift-b', run: (v) => toggleWrap(v, '**') },
   { key: 'Mod-i', run: (v) => toggleWrap(v, '*') },
   { key: 'Mod-e', run: (v) => toggleWrap(v, '`') },
   { key: 'Mod-Shift-h', run: (v) => toggleWrap(v, '==') },

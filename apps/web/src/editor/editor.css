@@ -2,7 +2,7 @@
 
 .note-layout { display: grid; grid-template-columns: minmax(0, 1fr) 132px; min-height: 100%; }
 
-.note-column { min-width: 0; padding: 22px 0 80px; }
+.note-column { min-width: 0; width: 100%; max-width: calc(78ch + 110px); margin: 0 auto; padding: 22px 0 80px; }
 
 
 
@@ -44,13 +44,16 @@
 .md-task { color: var(--accent); cursor: pointer; }
 .md-quote { color: var(--muted); border-left: 2px solid var(--line); }
 .md-fence { background: var(--pane); }
-/* "---" keeps its mark and draws the rule out to the edge of the text column. */
-.md-rule { color: var(--faint); position: relative; }
+/* "---" runs on to the edge of the text column in the same dash it was typed with. */
+.editor .cm-line.md-rule { color: var(--faint); white-space: nowrap; overflow: hidden; }
 .md-rule::after {
-  content: ''; position: absolute; left: calc(12px + 4ch); right: 32px; top: 50%;
-  border-top: 1px dashed var(--faint); pointer-events: none;
+  content: '--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  pointer-events: none;
 }
 .md-table { white-space: pre; }
+.md-table-row { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: top; white-space: pre; scrollbar-width: none; }
+.md-folded { color: var(--faint); margin-left: 1ch; cursor: pointer; }
+.md-folded:hover { color: var(--accent); }
 .md-mention { color: var(--link); border-bottom: 1px dotted currentColor; cursor: text; }
 .cm-editor .md-mention:hover { border-bottom-style: solid; }
 
@@ -78,10 +81,11 @@
 
 /* ---------- the note under the caret, and the notebook's own settings ---------- */
 
-.note-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; flex: none;
-  min-height: 34px; padding: 4px 16px 4px 62px; border-bottom: 1px solid var(--line);
-  background: var(--pane); color: var(--muted); font-size: 12px;
+/* Same centre line as the text column below it, the map's width kept clear on the right. */
+.note-bar { flex: none; padding: 4px 132px 4px 0; border-bottom: 1px solid var(--line); background: var(--pane); color: var(--muted); font-size: 12px; }
+.note-bar-inner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-height: 26px;
+  max-width: calc(78ch + 110px); margin: 0 auto; padding-left: 62px;
 }
 .note-bar-title { color: var(--text); font-weight: 700; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .note-bar-links { display: inline-flex; gap: 10px; color: var(--faint); }
@@ -118,7 +122,8 @@
 
 @media (max-width: 899px) {
   .note-layout { grid-template-columns: minmax(0, 1fr); }
-  .note-bar { padding-left: 16px; }
+  .note-bar { padding-right: 0; }
+  .note-bar-inner { padding: 0 16px; }
   .notebook-head, .notebook-settings { margin-left: 16px; margin-right: 16px; }
   .minimap { display: none; }
   .editor .cm-lineNumbers .cm-gutterElement { min-width: 30px; padding-right: 4px; font-size: 11px; }
