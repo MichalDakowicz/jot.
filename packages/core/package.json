@@ -27,7 +27,12 @@
     "./tiptapDoc": "./src/tiptapDoc.ts",
     "./types": "./src/types.ts",
     "./typing": "./src/typing.ts",
-    "./theme/tokens": "./src/theme/tokens.ts"
+    "./theme/tokens": "./src/theme/tokens.ts",
+    "./graph": "./src/graph.ts",
+    "./theme/ink": "./src/theme/ink.ts",
+    "./embed": "./src/embed.ts",
+    "./fisheye": "./src/fisheye.ts",
+    "./publicContent": "./src/publicContent.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

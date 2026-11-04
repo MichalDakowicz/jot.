@@ -7,6 +7,8 @@
     "packages/*"
   ],
   "scripts": {
+    "web": "npm run dev -w @jot/web",
+    "build:web": "npm run build -w @jot/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:sharing": "node scripts/test-public-sharing.mjs",

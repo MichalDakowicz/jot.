@@ -13,6 +13,11 @@ type AuthValue = {
   configured: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ needsConfirmation: boolean }>;
+  /**
+   * Starts Google sign-in and returns the provider URL. A browser follows it
+   * itself; a phone passes `skipBrowserRedirect` and opens it in an auth session.
+   */
+  signInWithGoogle: (redirectTo: string, skipBrowserRedirect?: boolean) => Promise<string | null>;
   signOut: () => Promise<void>;
   saveProfile: (patch: Partial<Pick<Profile, 'full_name' | 'year_label' | 'avatar_path'>>) => Promise<void>;
   reloadProfile: () => Promise<void>;
@@ -132,6 +137,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw error;
         return { needsConfirmation: !data.session };
+      },
+
+      async signInWithGoogle(redirectTo, skipBrowserRedirect = false) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo, skipBrowserRedirect },
+        });
+        if (error) throw error;
+        return data.url;
       },
 
       async signOut() {
