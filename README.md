@@ -109,12 +109,13 @@ PostgreSQL engine, including anonymous access, write protection, and revocation.
 4. **Run it.**
 
    ```bash
-   npm install
-   npx expo start -c        # -c clears the cache so new env vars are read
+   npm install              # once, at the repo root: installs every workspace
+   npm run mobile           # expo start in apps/mobile
    ```
 
-   Then press `a` for Android, `i` for iOS, `w` for the browser, or scan the QR
-   code with Expo Go. `npx expo export --platform web` builds a static site.
+   The `.env` lives in `apps/mobile/`. Press `a` for Android or `w` for the
+   browser. `npx expo export --platform web`, run in `apps/mobile`, builds the
+   current static site.
 
 On the first sign-in the Today screen offers to fill five notebooks with the
 sample term from the design (nine linked notes, tags, a Mon–Fri timetable), or
@@ -122,24 +123,28 @@ to start with a single empty notebook.
 
 ## How it is put together
 
+An npm-workspaces monorepo: two apps with their own frontends over one shared core.
+
 ```
-app/                     expo-router routes
-  _layout.tsx            fonts, providers, the auth gate
-  (main)/_layout.tsx     stack + islands on a phone, rail + columns when wide
-lib/
-  supabase.ts            client, AsyncStorage session persistence
-  auth.tsx              session, profile, avatar signed URLs
+packages/core/src/       @jot/core — no React Native or DOM imports
+  client.ts              the Supabase clients each app hands over at startup
+  auth.tsx               session, profile, avatar signed URLs
   store.tsx              notebooks/notes/classes, debounced writes, export, seeding
   markdown.ts            the markdown dialect: blocks and inline spans
   seed.ts                first-run content from the design
-components/
-  Markdown.tsx           renders parsed markdown as React Native text
-  NavIslands.tsx         the three-island nav
-  LinkMap.tsx            the SVG graph
-  DesktopChrome.tsx      the rail, notebook column and note list past 900 px
-  Blob.tsx, PaperDots.tsx, MentionPicker.tsx, ProfileSheet.tsx, ui.tsx
-  Logo.tsx               wordmark, app mark and lockup
-theme/tokens.ts          the design system's colours, fonts, shadows, tints
+  theme/tokens.ts        the design system's colours, fonts, shadows, tints
+  __tests__/             Vitest tests for the pure helpers
+apps/mobile/             the Expo app
+  app/                   expo-router routes
+    _layout.tsx          fonts, providers, the auth gate
+    (main)/_layout.tsx   stack + islands on a phone, rail + columns when wide
+  lib/supabase.ts        AsyncStorage-backed clients, AppState as the foreground signal
+  components/
+    Markdown.tsx         renders parsed markdown as React Native text
+    NavIslands.tsx       the three-island nav
+    LinkMap.tsx          the SVG graph
+    DesktopChrome.tsx    the rail, notebook column and note list past 900 px
+    Logo.tsx             wordmark, app mark and lockup
 supabase/schema.sql      tables, RLS, triggers, buckets
 scripts/
   build-display-font.mjs Caprasimo + composed Polish letters

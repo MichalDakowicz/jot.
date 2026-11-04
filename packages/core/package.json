@@ -1,0 +1,47 @@
+{
+  "name": "@jot/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./auth": "./src/auth.tsx",
+    "./bytes": "./src/bytes.ts",
+    "./caret": "./src/caret.ts",
+    "./client": "./src/client.ts",
+    "./count": "./src/count.ts",
+    "./doc": "./src/doc.ts",
+    "./field": "./src/field.ts",
+    "./keyboard": "./src/keyboard.ts",
+    "./live": "./src/live.ts",
+    "./markdown": "./src/markdown.ts",
+    "./menu": "./src/menu.ts",
+    "./outline": "./src/outline.ts",
+    "./paste": "./src/paste.ts",
+    "./rich": "./src/rich.ts",
+    "./seed": "./src/seed.ts",
+    "./sharing": "./src/sharing.ts",
+    "./shelf": "./src/shelf.ts",
+    "./store": "./src/store.tsx",
+    "./tags": "./src/tags.ts",
+    "./time": "./src/time.ts",
+    "./tiptapDoc": "./src/tiptapDoc.ts",
+    "./types": "./src/types.ts",
+    "./typing": "./src/typing.ts",
+    "./theme/tokens": "./src/theme/tokens.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.113.0"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.1"
+  }
+}
