@@ -879,7 +879,7 @@ export default function Editor() {
                   {...blockData(i)}
                 >
                   <Gutter line={i + 2} />
-                  <DashedRule style={{ flex: 1 }} />
+                  <DashedRule style={{ flex: 1, alignSelf: 'center' }} />
                 </Pressable>
               );
             }
