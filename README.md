@@ -10,11 +10,11 @@ thing. Login, notes and files all live in Supabase.
 | Screen | Route | What is there |
 | --- | --- | --- |
 | Onboarding | `/onboarding` | The three first-run cards, then straight to sign-in |
-| Sign in / sign up | `/sign-in` | Supabase email + password auth |
+| Sign in / sign up | `/sign-in` | Google, or email + password |
 | Today | `/today` | Greeting, today's timetable, the four notes you touched last |
 | Notebooks | `/shelf` | Notebook grid, link-map and tag shortcuts, notebook creation |
 | A notebook | `/notebook/[id]` | Its notes with tags, and notebook deletion |
-| A note | `/note/[id]` | Rendered markdown on dotted paper, tags, forward and back links |
+| A note | `/note/[id]` | The note; on the web it opens straight into the editor, with tags, forward and back links |
 | Public share | `/share/note/[id]` or `/share/notebook/[id]` | Read-only published content, no sign-in required |
 | Editor | `/editor/[id]` | Line-by-line source editing, Enter splits, Backspace merges, `@` picker, the notebook and tag row under the title |
 | Search | `/search` | Free text or `#tag` search across every note |
@@ -34,27 +34,23 @@ open is still `/note/<id>`, so links are shareable.
 The profile island opens the sheet: profile picture upload, the link map, every
 tag, notebook export, sign out.
 
-## Type and logo
+## The look
 
-Headings are set in **Jot Display**: Caprasimo, the display face the design
-canvas uses, with the sixteen Polish letters it lacks composed in — the acute
-from its own á/Á, the tittle from i, an ogonek mirrored out of the cedilla, a
-drawn bar for Ł/ł, plus the middle dot. Caprasimo is OFL with no Reserved Font
-Name, so the derivative is allowed; `assets/fonts/OFL.txt` ships with it.
-Body text is Figtree, which covers Polish as published.
+An editor for notes: slate dark or paper light (following the system), one
+sage accent, lavender for links, everything set in **JetBrains Mono**, which
+covers Polish. Markdown is edited as source that sets itself — a heading line
+is set large and keeps its `#`, muted, in front. On the web the note sits in a
+CodeMirror editor with line numbers, embeds under image, video and link lines,
+and a minimap beside it that swells into readable text under the pointer.
+Share pages drop all of that and render the note for reading.
+
+The mark is a monospace "j" with its block cursor on the slate tile. Its
+geometry and colours are in `packages/core/src/theme/logo.json`; both apps
+draw from it, and so does the icon script:
 
 ```bash
-npm run font    # rebuild assets/fonts/JotDisplay-Regular.ttf from Caprasimo
-npm run icons   # redraw every app icon from the logo
+npm run icons   # store icon, Android adaptive + monochrome layers, splash, favicons
 ```
-
-The logo is **2a** from the canvas — wordmark with a blob full stop, app mark
-as an "n" in the corner of a tile — recoloured: terracotta tile `#c67139`,
-cream letter `#fffdf9`, sage stop `#ccdbb2`. `components/Logo.tsx` draws it in
-the app; `scripts/make-icons.mjs` renders the store icon, both Android adaptive
-layers, the monochrome layer, the splash mark and the favicon, taking the "n"
-as an outline straight from the font so nothing depends on a font being
-installed.
 
 ## Setup
 
@@ -132,8 +128,15 @@ packages/core/src/       @jot/core — no React Native or DOM imports
   store.tsx              notebooks/notes/classes, debounced writes, export, seeding
   markdown.ts            the markdown dialect: blocks and inline spans
   seed.ts                first-run content from the design
-  theme/tokens.ts        the design system's colours, fonts, shadows, tints
+  theme/ink.ts           the editor inks, dark and light
+  theme/scheme.ts        maps the phone's palette roles onto the inks at launch
+  theme/logo.json        the mark's geometry and colours
+  embed.ts, fisheye.ts, graph.ts, publicContent.ts, oauth.ts
   __tests__/             Vitest tests for the pure helpers
+apps/web/                the Vite + React web app
+  src/editor/            CodeMirror: live markdown, embeds, @ and / menus, the minimap
+  src/pages/             one file per route; Share.tsx renders published notes
+  src/components/        the shell (explorer, top bar, status bar) and its parts
 apps/mobile/             the Expo app
   app/                   expo-router routes
     _layout.tsx          fonts, providers, the auth gate
@@ -147,11 +150,10 @@ apps/mobile/             the Expo app
     Logo.tsx             wordmark, app mark and lockup
 supabase/schema.sql      tables, RLS, triggers, buckets
 scripts/
-  build-display-font.mjs Caprasimo + composed Polish letters
   make-icons.mjs         every icon asset, drawn from the logo
 ```
 
-`sharp` and `opentype.js` are dev-only dependencies, used by those two scripts.
+`sharp` is a dev-only dependency, used by the icon script.
 
 Notes are edited locally and pushed to Supabase on a 700 ms debounce, so typing
 never waits for the network; leaving the editor flushes anything pending.
@@ -173,6 +175,5 @@ npm run android    # expo start --android
 npm run ios        # expo start --ios
 npm run web        # expo start --web
 npm run typecheck  # tsc --noEmit
-npm run font       # rebuild the display font
 npm run icons      # rebuild the icons
 ```
