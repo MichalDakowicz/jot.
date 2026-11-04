@@ -6,6 +6,7 @@ export type Profile = {
 };
 
 export type Notebook = {
+  is_public?: boolean;
   id: string;
   user_id: string;
   name: string;
@@ -17,6 +18,7 @@ export type Notebook = {
 };
 
 export type Note = {
+  is_public?: boolean;
   id: string;
   user_id: string;
   notebook_id: string;

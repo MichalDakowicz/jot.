@@ -27,6 +27,7 @@ function Gate() {
   const group = segments[0] as string | undefined;
 
   useEffect(() => {
+    if (group === 'share') return;
     if (!configured) {
       if (group !== 'setup') router.replace('/setup');
       return;
@@ -64,7 +65,22 @@ export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     const rule = document.createElement('style');
-    rule.textContent = `::selection{background:${SELECTION.bg};color:${SELECTION.fg}}`;
+    rule.textContent = `
+      ::selection{background:${SELECTION.bg};color:${SELECTION.fg}}
+      [data-jot-scrollbar="contents"]{
+        scrollbar-width:thin;
+        scrollbar-color:${c.n500} transparent;
+      }
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar{width:8px;height:8px}
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar-track{background:transparent}
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar-thumb{
+        background:${c.n500};border-radius:999px;
+        border:2px solid transparent;background-clip:padding-box;
+      }
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar-thumb:hover{background-color:${c.n700}}
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar-button{display:none}
+      [data-jot-scrollbar="contents"]::-webkit-scrollbar-corner{background:transparent}
+    `;
     document.head.appendChild(rule);
     return () => rule.remove();
   }, []);

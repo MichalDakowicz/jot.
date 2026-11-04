@@ -52,7 +52,8 @@
     "web": "expo start --web",
     "font": "node scripts/build-display-font.mjs",
     "icons": "node scripts/make-icons.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:sharing": "node scripts/test-public-sharing.mjs"
   },
   "private": true
 }

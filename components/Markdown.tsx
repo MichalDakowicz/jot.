@@ -16,6 +16,8 @@ type Props = Handlers & {
   compact?: boolean;
   /** Set the paragraph style, so an editor block can be drawn as its own kind. */
   textStyle?: StyleProp<TextStyle>;
+  onHeadingLayout?: (blockIndex: number, y: number) => void;
+  onLayout?: (y: number) => void;
 };
 
 function renderInline(nodes: Inline[], h: Handlers, keyBase: string): React.ReactNode[] {
@@ -184,10 +186,19 @@ export function Markdown({
   onMention,
   compact = false,
   textStyle,
+  onHeadingLayout,
+  onLayout,
 }: Props) {
   const blocks = useMemo(() => parseBlocks(source.split('\n'), mentions), [source, mentions]);
   const handlers = { onMention };
-  return <View>{blocks.map((b, i) => renderBlock(b, handlers, 'b' + i, compact, textStyle))}</View>;
+  return <View onLayout={onLayout ? (event) => onLayout(event.nativeEvent.layout.y) : undefined}>
+    {blocks.map((b, i) => {
+      const rendered = renderBlock(b, handlers, 'b' + i, compact, textStyle);
+      return onHeadingLayout && /^h[1-4]$/.test(b.t)
+        ? <View key={'b' + i} onLayout={(event) => onHeadingLayout(i, event.nativeEvent.layout.y)}>{rendered}</View>
+        : rendered;
+    })}
+  </View>;
 }
 
 const styles = StyleSheet.create({

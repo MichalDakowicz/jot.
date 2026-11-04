@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Blob } from '../../../components/Blob';
+import { PublicShare } from '../../../components/PublicShare';
 import { BackLink, Empty, Kicker, NoteRow, Screen } from '../../../components/ui';
 import { confirmDestructive } from '../../../lib/confirm';
 import { useStore } from '../../../lib/store';
@@ -92,6 +93,7 @@ export default function NotebookScreen() {
       </View>
 
       <View style={{ gap: 11 }}>
+        <PublicShare key={nb.id} kind="notebook" id={nb.id} published={!!nb.is_public} />
         {own.length ? (
           own.map((n) => (
             <NoteRow

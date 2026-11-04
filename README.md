@@ -15,6 +15,7 @@ thing. Login, notes and files all live in Supabase.
 | Notebooks | `/shelf` | Notebook grid, link-map and tag shortcuts, notebook creation |
 | A notebook | `/notebook/[id]` | Its notes with tags, and notebook deletion |
 | A note | `/note/[id]` | Rendered markdown on dotted paper, tags, forward and back links |
+| Public share | `/share/note/[id]` or `/share/notebook/[id]` | Read-only published content, no sign-in required |
 | Editor | `/editor/[id]` | Line-by-line source editing, Enter splits, Backspace merges, `@` picker, the notebook and tag row under the title |
 | Search | `/search` | Free text or `#tag` search across every note |
 | Tags | `/tags` | Tag cloud sized by use, plus the notes under the selected tag |
@@ -56,6 +57,29 @@ as an outline straight from the font so nothing depends on a font being
 installed.
 
 ## Setup
+
+### Public sharing
+
+After applying `supabase/schema.sql`, run `supabase/public-sharing.sql` in the
+Supabase SQL editor (also required for existing databases). Notes and notebooks
+start private. Their detail screens have a **Public link** control to enable,
+copy/share, or disable a public read-only link. Recipients need no account.
+
+Publishing a notebook publishes all its current and future notes. A note can
+also be published separately; disabling its notebook does not disable that
+separate publication. Moving a note into a public notebook makes it public;
+moving it out removes inherited access. Revocation takes effect on subsequent
+requests; previously read or copied content cannot be recalled. Public rows
+are readable through the API as well as through links. Profiles, class schedules,
+and unrelated private notes stay private.
+
+Web links use the current origin. Native links use `EXPO_PUBLIC_SITE_URL`,
+defaulting to `https://jot-notebook.web.app`. Publish the web build at that URL
+so recipients can open links. Public pages use anonymous access even for owners,
+so a disabled link shows the same unavailable state for everyone.
+
+Run `npm run test:sharing` to verify the sharing SQL against an isolated local
+PostgreSQL engine, including anonymous access, write protection, and revocation.
 
 1. **Environment.** Copy `.env.example` to `.env` and fill in:
 

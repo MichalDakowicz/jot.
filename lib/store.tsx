@@ -98,8 +98,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setError(null);
       }
       const [nb, nt, cs] = await Promise.all([
-        supabase.from('notebooks').select('*').order('position', { ascending: true }),
-        supabase.from('notes').select('*').order('updated_at', { ascending: false }),
+        supabase.from('notebooks').select('*').eq('user_id', uid).order('position', { ascending: true }),
+        supabase.from('notes').select('*').eq('user_id', uid).order('updated_at', { ascending: false }),
         supabase.from('class_sessions').select('*').order('starts_at', { ascending: true }),
       ]);
       const firstError = nb.error ?? nt.error ?? cs.error;
@@ -135,11 +135,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     let dropped = false;
     const channel = supabase
       .channel(`jot:${uid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notebooks' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notebooks', filter: `user_id=eq.${uid}` }, (payload) => {
         const change = payload as unknown as Change<Notebook>;
         setNotebooks((prev) => applyChange(prev, change, byPosition));
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${uid}` }, (payload) => {
         const change = payload as unknown as Change<Note>;
         if (change.eventType === 'DELETE') {
           const id = change.old.id;
