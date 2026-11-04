@@ -6,6 +6,8 @@ import {
   JetBrainsMono_600SemiBold,
   JetBrainsMono_700Bold,
   JetBrainsMono_800ExtraBold,
+  JetBrainsMono_400Regular_Italic,
+  JetBrainsMono_800ExtraBold_Italic,
 } from '@expo-google-fonts/jetbrains-mono';
 import { useFonts } from 'expo-font';
 import { Slot, useRouter, useSegments } from 'expo-router';
@@ -57,6 +59,8 @@ export default function RootLayout() {
     JetBrainsMono_600SemiBold,
     JetBrainsMono_700Bold,
     JetBrainsMono_800ExtraBold,
+    JetBrainsMono_400Regular_Italic,
+    JetBrainsMono_800ExtraBold_Italic,
   });
 
   // A browser has a selection colour of its own, and it is not the one the held

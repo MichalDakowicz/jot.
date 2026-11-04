@@ -50,6 +50,9 @@ export const f = {
   b700: 'JetBrainsMono_700Bold',
   b800: 'JetBrainsMono_800ExtraBold',
   mono: 'JetBrainsMono_400Regular',
+  /** Emphasis: a phone will not slant a custom face itself, so the italics are loaded as faces of their own. */
+  i400: 'JetBrainsMono_400Regular_Italic',
+  i800: 'JetBrainsMono_800ExtraBold_Italic',
 } as const;
 
 export const shadow = {

@@ -36,6 +36,11 @@ export function BlockPrefix({ block, line, marker, onToggle }: {
   );
 }
 
+/** The line number alone, for a block with no mark of its own, such as a rule. */
+export function Gutter({ line }: { line: number }) {
+  return <Text style={styles.gutter}>{line}</Text>;
+}
+
 /** Line 1: the title's gutter number and its "#", sized with the title as it shrinks to fit. */
 export function TitlePrefix({ fontSize }: { fontSize: number }) {
   const lineHeight = fontSize * 1.26;

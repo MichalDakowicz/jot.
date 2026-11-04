@@ -6,7 +6,7 @@ import { c, f, shadow } from '@jot/core/theme/tokens';
 
 const BUTTONS: { kind: keyof Marks; label: string; style?: object }[] = [
   { kind: 'bold', label: 'B', style: { fontFamily: f.b800 } },
-  { kind: 'em', label: 'I', style: { fontStyle: 'italic' } },
+  { kind: 'em', label: 'I', style: { fontFamily: f.i400 } },
   { kind: 'strike', label: 'S', style: { textDecorationLine: 'line-through' } },
   { kind: 'mark', label: 'Mark', style: { backgroundColor: c.a200, color: c.a900 } },
   { kind: 'code', label: 'Code', style: { fontFamily: f.mono, fontSize: 12.5 } },

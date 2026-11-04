@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LiveField, type LiveFieldHandle } from '../../../components/LiveField';
-import { BlockPrefix, TitlePrefix } from '../../../components/BlockPrefix';
+import { BlockPrefix, Gutter, TitlePrefix } from '../../../components/BlockPrefix';
 import { DashedRule } from '../../../components/DashedRule';
 import { MarkBar } from '../../../components/MarkBar';
 import { MentionPicker, type MentionHit } from '../../../components/MentionPicker';
@@ -878,7 +878,8 @@ export default function Editor() {
                   style={[styles.ruleRow, held && styles.held]}
                   {...blockData(i)}
                 >
-                  <DashedRule />
+                  <Gutter line={i + 2} />
+                  <DashedRule style={{ flex: 1 }} />
                 </Pressable>
               );
             }
@@ -1366,7 +1367,7 @@ const styles = StyleSheet.create({
   spanChip: { backgroundColor: c.n200, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
   spanChipText: { fontFamily: f.b700, fontSize: 12.5, color: c.n800 },
 
-  ruleRow: { paddingVertical: 10 },
+  ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
 
   addBlock: { alignSelf: 'flex-start', paddingVertical: 8 },
   addBlockText: { fontFamily: f.b700, fontSize: 12.5, color: c.n500 },

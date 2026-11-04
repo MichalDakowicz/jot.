@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   pCompact: { marginBottom: 0, lineHeight: 24 },
   bold: { fontFamily: f.b800 },
-  em: { fontStyle: 'italic' },
+  em: { fontFamily: f.i400 },
   mark: { backgroundColor: c.a200, color: c.a900 },
   strike: { textDecorationLine: 'line-through' as const },
   code: {
