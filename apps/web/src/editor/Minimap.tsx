@@ -74,24 +74,26 @@ export function Minimap({ view, tick, scroller }: Props) {
     <div className="minimap" ref={pane} aria-label="Note map"
       onMouseMove={(e) => setPointer(e.clientY - e.currentTarget.getBoundingClientRect().top)}
       onMouseLeave={() => setPointer(null)}>
-      {pointer === null && total ? (
-        <div className="minimap-view" style={{ top: scroll.top * total - slide, height: Math.max(12, scroll.span * total) }} />
-      ) : null}
-      <div className="minimap-lines" style={{ transform: `translateY(${shift}px)` }}>
-        {lines.map((l, i) => {
-          const h = layout.heights[i];
-          const near = (h - base) / (MAX - base);
-          return (
-            <button key={i} className={'minimap-line' + (l.level ? ` level-${l.level}` : '') + (i === caretLine ? ' caret' : '')}
-              style={{ height: h, fontSize: Math.max(1, h * 0.7) }} onClick={() => jump(i)} tabIndex={-1}>
-              {near > 0.25 ? (
-                <span className="minimap-text" style={{ opacity: Math.min(1, near * 1.4) }}>{l.text || ' '}</span>
-              ) : (
-                <span className="minimap-bar" style={{ width: `${Math.min(100, l.text.length * 1.4)}%` }} />
-              )}
-            </button>
-          );
-        })}
+      <div className="minimap-panel">
+        {pointer === null && total ? (
+          <div className="minimap-view" style={{ top: scroll.top * total - slide, height: Math.max(12, scroll.span * total) }} />
+        ) : null}
+        <div className="minimap-lines" style={{ transform: `translateY(${shift}px)` }}>
+          {lines.map((l, i) => {
+            const h = layout.heights[i];
+            const near = (h - base) / (MAX - base);
+            return (
+              <button key={i} className={'minimap-line' + (l.level ? ` level-${l.level}` : '') + (i === caretLine ? ' caret' : '')}
+                style={{ height: h, fontSize: Math.max(1, h * 0.7) }} onClick={() => jump(i)} tabIndex={-1}>
+                {near > 0.25 ? (
+                  <span className="minimap-text" style={{ opacity: Math.min(1, near * 1.4) }}>{l.text || ' '}</span>
+                ) : (
+                  <span className="minimap-bar" style={{ width: `${Math.min(100, l.text.length * 1.4)}%` }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -39,6 +39,9 @@ An editor for notes: a code/doc editor's calm, after the Digital Meadow referenc
 - Type: **JetBrains Mono** everywhere (covers Polish), headings in its 800 weight.
 - Editing shows markdown as source that sets itself: a heading line is set large and its
   `#` stays, muted, in front; bold sits between faint stars. Line numbers in a gutter.
+  The title is line 1 and the note's only h1 (`# `); any other `# ` is set down to `##`.
+  `title` and `body` stay separate columns (`@jot/core/titled` joins and splits them).
+  `---` draws a full-width dashed rule.
   The web editor is CodeMirror (`apps/web/src/editor`); the phone keeps its native block
   editor and shows block marks muted with a slim block-number gutter.
 - Beside a note on the web: a minimap that swells into readable lines under the pointer.

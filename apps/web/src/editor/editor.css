@@ -6,20 +6,8 @@
 
 .note-head { padding: 0 32px 10px 62px; }
 
-.note-title {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: none;
-  padding: 0;
-  font-size: var(--h1);
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-.note-title::placeholder { color: var(--faint); }
 
-.note-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+.note-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: var(--muted); font-size: 12px; }
 .note-meta select { background: none; border: 0; color: var(--muted); padding: 0; cursor: pointer; }
 .note-meta select:hover { color: var(--text); }
 
@@ -33,7 +21,9 @@
 .editor .cm-focused .cm-selectionBackground,
 .editor ::selection { background: var(--selection) !important; }
 .editor .cm-activeLine { background: var(--active-line); }
-.editor .cm-placeholder { color: var(--faint); }
+.md-untitled { color: var(--faint); }
+/* The title line: the note's only h1, set a step above the body's headings. */
+.editor .cm-line.md-h1:first-child { padding-top: 0 !important; padding-bottom: 0.3em; }
 
 .editor .cm-gutters { background: transparent; border: 0; color: var(--faint); font-size: 12px; }
 .editor .cm-lineNumbers .cm-gutterElement { min-width: 50px; padding: 0 6px 0 0; text-align: right; }
@@ -58,7 +48,12 @@
 .md-task { color: var(--accent); cursor: pointer; }
 .md-quote { color: var(--muted); border-left: 2px solid var(--line); }
 .md-fence { background: var(--pane); }
-.md-rule { color: var(--faint); }
+/* "---" keeps its mark and draws the rule out to the edge of the text column. */
+.md-rule { color: var(--faint); position: relative; }
+.md-rule::after {
+  content: ''; position: absolute; left: calc(12px + 4ch); right: 32px; top: 50%;
+  border-top: 1px dashed var(--faint); pointer-events: none;
+}
 .md-table { white-space: pre; }
 .md-mention { color: var(--link); border-bottom: 1px dotted currentColor; cursor: text; }
 .cm-editor .md-mention:hover { border-bottom-style: solid; }
@@ -87,10 +82,14 @@
 
 /* ---------- minimap ---------- */
 
-.minimap {
-  position: sticky; top: 0; height: calc(100vh - 44px - 26px); overflow: hidden;
+/* The column keeps its width; the panel inside it grows left over the editor while hovered. */
+.minimap { position: sticky; top: 0; height: calc(100vh - 44px - 26px); z-index: 5; }
+.minimap-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 100%; overflow: hidden;
   border-left: 1px solid var(--line); background: var(--bg);
+  transition: width 140ms ease-out;
 }
+.minimap:hover .minimap-panel { width: min(440px, 46vw); background: var(--pane); }
 .minimap-lines { position: absolute; inset: 0 0 auto 0; will-change: transform; }
 .minimap-line {
   display: flex; align-items: center; width: 100%; padding: 0 10px; overflow: hidden;

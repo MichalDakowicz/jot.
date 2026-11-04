@@ -11,7 +11,7 @@ import { NotebookDot } from '../components/NotebookDot';
 import { PublicLink } from '../components/PublicLink';
 import { TopBar, useStatus } from '../components/Shell';
 import { TagRow } from '../components/TagRow';
-import { Editor } from '../editor/Editor';
+import { NoteEditor } from '../editor/NoteEditor';
 import { Minimap } from '../editor/Minimap';
 
 /** A note opens straight into its source: title, tags, body, and the map beside it. */
@@ -81,8 +81,6 @@ export function NotePage() {
         <div className="note-layout">
           <div className="note-column">
             <div className="note-head">
-              <input className="note-title" value={note.title} placeholder="Untitled" aria-label="Title"
-                onChange={(e) => updateNote(note.id, { title: e.target.value })} />
               <div className="note-meta">
                 <label className="notebook-pick">
                   {nb ? <NotebookDot tint={nb.tint} /> : null}
@@ -94,8 +92,7 @@ export function NotePage() {
                 <TagRow tags={note.tags ?? []} onChange={(tags) => updateNote(note.id, { tags })} />
               </div>
             </div>
-            <Editor key={note.id} value={note.body} autoFocus={!note.body}
-              onChange={(body) => updateNote(note.id, { body })}
+            <NoteEditor note={note}
               mentions={mentionables.filter((m) => m.id !== note.id)}
               onMention={(target) => navigate(`/note/${target}`)}
               onView={onView} />

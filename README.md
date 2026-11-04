@@ -39,7 +39,8 @@ tag, notebook export, sign out.
 An editor for notes: slate dark or paper light (following the system), one
 sage accent, lavender for links, everything set in **JetBrains Mono**, which
 covers Polish. Markdown is edited as source that sets itself — a heading line
-is set large and keeps its `#`, muted, in front. On the web the note sits in a
+is set large and keeps its `#`, muted, in front. The title is the first line,
+the note's one `# ` heading. On the web the note sits in a
 CodeMirror editor with line numbers, embeds under image, video and link lines,
 and a minimap beside it that swells into readable text under the pointer.
 Share pages drop all of that and render the note for reading.

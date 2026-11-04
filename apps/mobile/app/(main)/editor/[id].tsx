@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LiveField, type LiveFieldHandle } from '../../../components/LiveField';
-import { BlockPrefix } from '../../../components/BlockPrefix';
+import { BlockPrefix, TitlePrefix } from '../../../components/BlockPrefix';
+import { DashedRule } from '../../../components/DashedRule';
 import { MarkBar } from '../../../components/MarkBar';
 import { MentionPicker, type MentionHit } from '../../../components/MentionPicker';
 import { NoteMeta } from '../../../components/NoteMeta';
@@ -843,16 +844,17 @@ export default function Editor() {
             Multiline so a title that has wound down to the floor wraps here the
             same way it does on the note, instead of scrolling out of sight.
             Return leaves the field rather than filing a newline in the title. */}
-        <View onLayout={title.onLayout}>
+        <View onLayout={title.onLayout} style={styles.titleRow}>
+          <TitlePrefix fontSize={title.fontSize} />
           <TextInput
             value={note.title}
             onChangeText={(next) => updateNote(noteId, { title: next.replace(/[\r\n]+/g, ' ') })}
-            placeholder="Title"
+            placeholder="Untitled"
             placeholderTextColor={c.n400}
             selectionColor={c.accent}
             multiline
             submitBehavior="blurAndSubmit"
-            style={[styles.title, { fontSize: title.fontSize, lineHeight: title.fontSize * 1.26 }]}
+            style={[styles.title, { flex: 1, fontSize: title.fontSize, lineHeight: title.fontSize * 1.26 }]}
           />
         </View>
 
@@ -876,7 +878,7 @@ export default function Editor() {
                   style={[styles.ruleRow, held && styles.held]}
                   {...blockData(i)}
                 >
-                  <View style={styles.rule} />
+                  <DashedRule />
                 </Pressable>
               );
             }
@@ -1063,7 +1065,7 @@ export default function Editor() {
               >
                 <BlockPrefix
                   block={block}
-                  line={i + 1}
+                  line={i + 2}
                   marker={markers[i]}
                   onToggle={() => replace(i, { done: !block.done }, sel.current.start)}
                 />
@@ -1289,6 +1291,7 @@ const styles = StyleSheet.create({
   done: { backgroundColor: c.accent, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 18 },
   doneText: { fontFamily: f.b700, fontSize: 13, color: c.paper },
   title: { fontFamily: f.head, color: c.text, paddingVertical: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
 
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
   quoteRow: {
@@ -1364,7 +1367,6 @@ const styles = StyleSheet.create({
   spanChipText: { fontFamily: f.b700, fontSize: 12.5, color: c.n800 },
 
   ruleRow: { paddingVertical: 10 },
-  rule: { height: 1, backgroundColor: c.n300 },
 
   addBlock: { alignSelf: 'flex-start', paddingVertical: 8 },
   addBlockText: { fontFamily: f.b700, fontSize: 12.5, color: c.n500 },

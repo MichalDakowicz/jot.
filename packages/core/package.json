@@ -35,7 +35,8 @@
     "./publicContent": "./src/publicContent.ts",
     "./theme/scheme": "./src/theme/scheme.ts",
     "./theme/logo": "./src/theme/logo.ts",
-    "./oauth": "./src/oauth.ts"
+    "./oauth": "./src/oauth.ts",
+    "./titled": "./src/titled.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

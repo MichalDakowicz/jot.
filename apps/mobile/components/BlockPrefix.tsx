@@ -13,7 +13,7 @@ const HEADING = { h1: 1, h2: 2, h3: 3, h4: 4 } as const;
  */
 export function BlockPrefix({ block, line, marker, onToggle }: {
   block: Block;
-  /** One-based, counted in blocks. */
+  /** Its line in the note, counted in blocks; the title is line 1. */
   line: number;
   /** The counted marker for a numbered or lettered item, "3." or "c.". */
   marker: string;
@@ -32,6 +32,17 @@ export function BlockPrefix({ block, line, marker, onToggle }: {
           {block.done ? <Text style={styles.tick}>✓</Text> : null}
         </Pressable>
       ) : null}
+    </>
+  );
+}
+
+/** Line 1: the title's gutter number and its "#", sized with the title as it shrinks to fit. */
+export function TitlePrefix({ fontSize }: { fontSize: number }) {
+  const lineHeight = fontSize * 1.26;
+  return (
+    <>
+      <Text style={[styles.gutter, { lineHeight }]}>1</Text>
+      <Text style={[styles.mark, { fontFamily: f.head, fontSize, lineHeight }]}>#</Text>
     </>
   );
 }
