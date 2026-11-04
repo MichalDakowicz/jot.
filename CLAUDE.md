@@ -12,11 +12,11 @@ links. An npm-workspaces monorepo; each app has its own frontend, both share one
 | Path            | What it is                                     | Notes                                      |
 |-----------------|------------------------------------------------|--------------------------------------------|
 | `apps/mobile`   | Expo SDK 57 / RN 0.86, Android APK             | package `com.marginalia.jot`, scheme `jot` |
-| `apps/web`      | Vite + React (being built) → Firebase          | site `jot-notebook` (`jot-notebook.web.app`) |
+| `apps/web`      | Vite + React → Firebase Hosting                | site `jot-notebook` (`jot-notebook.web.app`) |
 | `packages/core` | `@jot/core`: markdown, store, auth, tokens     | no React Native or DOM imports             |
 
-- Until `apps/web` reaches parity, the web site is still the Expo web export of
-  `apps/mobile`. Keep it working until the user switches hosting over.
+- The web site is `apps/web` (`npm run deploy -w @jot/web` builds and deploys it; only when
+  the user asks). The Expo web target in `apps/mobile` is no longer what is hosted.
 - Shared logic goes in `packages/core/src` and is imported as `@jot/core/<module>`. Each app
   hands core its Supabase clients and a foreground signal via `configureClient` before render.
 - Mobile routes live in `apps/mobile/app/` (expo-router). Phones get the three nav islands; past 900 px the
