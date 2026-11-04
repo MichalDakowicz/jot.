@@ -40,8 +40,8 @@ export function NotePage() {
     right: note ? (
       <>
         {caret ? <span>Ln {caret.number}, Col {view!.state.selection.main.head - caret.from + 1}</span> : null}
-        <span>{words} {plural(words, 'word')}</span>
-        <span className="wide-only">{chars} {plural(chars, 'char')}</span>
+        <span>{plural(words, 'word')}</span>
+        <span className="wide-only">{plural(chars, 'char')}</span>
         <span className="wide-only">markdown</span>
       </>
     ) : null,

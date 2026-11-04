@@ -42,7 +42,7 @@ export function TodayPage() {
             </>
           ) : (
             <>
-              <h1 className="page-title">{greeting()}, {firstName}</h1>
+              <h1 className="page-title">{greeting()} {firstName}</h1>
               <p className="muted">
                 {todayLabel()} · {classes.length ? `${spelled(classes.length)} ${classes.length === 1 ? 'class' : 'classes'}` : 'no classes'}
               </p>
