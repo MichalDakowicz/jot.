@@ -74,31 +74,39 @@
 .cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--raised) !important; color: var(--text) !important; }
 .cm-completionDetail { color: var(--faint); margin-left: 10px; font-style: normal !important; }
 .cm-completionMatchedText { text-decoration: none !important; color: var(--accent); }
-/* Find and replace: one quiet row pinned to the top of the editor. */
-.editor .cm-panels { background: var(--pane); color: var(--text); border-color: var(--line); z-index: 4; }
-.editor .cm-panels-top { position: sticky; top: 0; border-bottom: 1px solid var(--line); }
-.editor .cm-panel.cm-search {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 40px 8px 62px;
-  font-family: var(--mono); font-size: 12px;
+/* Find: a compact widget floating at the top right of the text, like a code editor's. */
+.editor .cm-panels, .editor .cm-panels-top { background: none; border: 0; }
+.find {
+  position: fixed; z-index: 30; top: 92px; right: 150px;
+  display: flex; align-items: flex-start; gap: 2px; padding: 4px 6px 4px 2px;
+  background: var(--pane); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.25); font-family: var(--mono); font-size: 12px;
 }
-.editor .cm-panel.cm-search br { display: none; }
-.editor .cm-search .cm-textfield {
-  height: 26px; min-width: 22ch; margin: 0; padding: 0 8px; border: 1px solid var(--line); border-radius: 5px;
-  background: var(--bg); color: var(--text); font: inherit;
+.find-rows { display: flex; flex-direction: column; gap: 4px; }
+.find-row { display: flex; align-items: center; gap: 2px; }
+.find-row[hidden] { display: none; }
+.find-box, .find-replace .find-field {
+  display: flex; align-items: center; width: 26ch; height: 24px; padding-right: 2px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 4px;
 }
-.editor .cm-search .cm-textfield:focus { outline: 0; border-color: var(--accent); }
-.editor .cm-search .cm-button {
-  height: 26px; margin: 0; padding: 0 9px; border: 1px solid var(--line); border-radius: 5px;
-  background: none; background-image: none; color: var(--muted); font: inherit;
+.find-box:focus-within, .find-replace .find-field:focus { border-color: var(--accent); }
+.find-field { flex: 1; min-width: 0; height: 100%; padding: 0 6px; border: 0; outline: 0; background: none; color: var(--text); font: inherit; }
+.find-replace .find-field { padding: 0 6px; outline: 0; }
+.find-field::placeholder { color: var(--faint); }
+.find-toggle {
+  height: 18px; min-width: 20px; padding: 0 3px; border-radius: 3px; border: 1px solid transparent;
+  color: var(--muted); font-size: 11px; line-height: 1;
 }
-.editor .cm-search .cm-button:hover { color: var(--text); border-color: var(--faint); }
-.editor .cm-search label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
-.editor .cm-search input[type=checkbox] { accent-color: var(--accent); margin: 0; }
-.editor .cm-search button[name=close] {
-  position: absolute; right: 12px; top: 8px; width: 26px; height: 26px; border-radius: 5px;
-  color: var(--muted); font-size: 16px; background: none; border: 0; cursor: pointer;
-}
-.editor .cm-search button[name=close]:hover { background: var(--raised); color: var(--text); }
+.find-toggle:nth-of-type(2) { text-decoration: underline; text-underline-offset: 2px; }
+.find-toggle:hover { color: var(--text); background: var(--raised); }
+.find-toggle.on { color: var(--accent); border-color: var(--accent); background: var(--raised); }
+.find-count { min-width: 9ch; padding: 0 6px; color: var(--muted); white-space: nowrap; }
+.find-count.none { color: var(--danger); }
+.find-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; color: var(--muted); }
+.find-icon:hover { color: var(--text); background: var(--raised); }
+.find-expand { height: 24px; }
+.find-expand svg { transition: transform 120ms; }
+.find-expand.open svg { transform: rotate(90deg); }
 .editor .cm-searchMatch { background: var(--mark); border-radius: 2px; }
 .editor .cm-searchMatch-selected { background: var(--selection); outline: 1px solid var(--accent); }
 .editor .cm-selectionMatch { background: var(--raised); }
@@ -147,6 +155,9 @@
   .note-bar-inner { padding: 0 16px; }
   .notebook-head, .notebook-settings { margin-left: 16px; margin-right: 16px; }
   .minimap { display: none; }
+  .find { right: 12px; left: 12px; }
+  .find-box, .find-replace .find-field { width: auto; flex: 1; }
+  .find-rows { flex: 1; }
   .editor .cm-lineNumbers .cm-gutterElement { min-width: 30px; padding-right: 4px; font-size: 11px; }
   .editor .cm-line { padding: 0 16px 0 8px; }
 }
