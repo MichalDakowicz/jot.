@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from './Icon';
+import { ContentsPane } from './ContentsPane';
 import { useIsWide } from '../lib/layout';
 import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import type { NoteCard } from '../lib/types';
@@ -21,21 +22,38 @@ export function Screen({
   children,
   style,
   gap = 22,
+  toolbar,
+  scrollRef,
 }: {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   gap?: number;
+  toolbar?: React.ReactNode | ((sidebar: boolean) => React.ReactNode);
+  scrollRef?: React.Ref<ScrollView>;
 }) {
   const insets = useSafeAreaInsets();
   const wide = useIsWide();
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const sidebar = !!toolbar && availableWidth >= 1040;
+  const navigation = typeof toolbar === 'function' ? toolbar(sidebar) : toolbar;
+  const navigationPane = toolbar ? sidebar ? (
+    <ContentsPane availableWidth={availableWidth}>{navigation}</ContentsPane>
+  ) : (
+    <View style={{ width: '100%', paddingTop: wide ? 16 : insets.top + 8, paddingHorizontal: 20, paddingBottom: 8 }}>
+      {navigation}
+    </View>
+  ) : null;
   // Shrinks the viewport itself, so a field being typed into scrolls above the keyboard.
   const keyboard = useKeyboardHeight();
   return (
+    <View onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)} style={{ flex: 1, flexDirection: sidebar ? 'row' : 'column' }}>
+      {!sidebar ? navigationPane : null}
     <ScrollView
-      style={[styles.screen, keyboard ? { marginBottom: keyboard } : null]}
+      ref={scrollRef}
+      style={[styles.screen, { minWidth: 0 }, keyboard ? { marginBottom: keyboard } : null]}
       contentContainerStyle={[
         {
-          paddingTop: wide ? 26 : insets.top + 14,
+          paddingTop: toolbar ? 14 : wide ? 26 : insets.top + 14,
           paddingBottom: wide ? 44 : insets.bottom + 130,
           // Gutters wide enough to read against on a desktop, and the column
           // centred in the pane instead of hanging off its left edge.
@@ -52,6 +70,8 @@ export function Screen({
     >
       {children}
     </ScrollView>
+    {sidebar ? navigationPane : null}
+    </View>
   );
 }
 
