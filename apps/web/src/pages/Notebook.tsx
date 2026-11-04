@@ -12,7 +12,7 @@ import { NotebookSettings } from '../components/NotebookSettings';
 import { TopBar, useStatus } from '../components/Shell';
 import { Minimap } from '../editor/Minimap';
 import { NotebookEditor } from '../editor/NotebookEditor';
-import { onlyNewest, toggleOnlyNewest } from '../editor/folds';
+import { isOnlyNewest, shownRange, toggleOnlyNewest } from '../editor/newest';
 import { sectionAt, sectionRanges } from '../editor/sections';
 
 /** A notebook is one file: its notes are the "# " sections in it. */
@@ -44,9 +44,12 @@ export function NotebookPage() {
 
   const current = view ? noteById(sectionAt(view.state, view.state.selection.main.head) ?? undefined) : undefined;
   const caret = view ? view.state.doc.lineAt(view.state.selection.main.head) : null;
-  const { words, chars } = countOf(view ? view.state.doc.toString() : '');
-  const picked = view ? view.state.selection.ranges.reduce((sum, r) => sum + r.to - r.from, 0) : 0;
-  const folded = view ? onlyNewest(view) : false;
+  // Counts cover what is on show: the newest note alone while only it is shown.
+  const shown = view ? shownRange(view.state) : { from: 0, to: 0 };
+  const { words, chars } = countOf(view ? view.state.doc.sliceString(shown.from, shown.to) : '');
+  const selected = view ? view.state.selection.ranges.filter((r) => !r.empty).map((r) => view.state.doc.sliceString(r.from, r.to)) : [];
+  const picked = countOf(selected.join('\n'));
+  const folded = view ? isOnlyNewest(view.state) : false;
   useStatus({
     left: (
       <>
@@ -60,12 +63,12 @@ export function NotebookPage() {
     right: caret ? (
       <>
         <span>Ln {caret.number}, Col {view!.state.selection.main.head - caret.from + 1}</span>
-        <span>{plural(words, 'word')}</span>
-        <span className="wide-only">{picked ? `${picked.toLocaleString('en')} of ` : ''}{plural(chars, 'char')}</span>
+        <span>{selected.length ? `${picked.words.toLocaleString('en')} of ` : ''}{plural(words, 'word')}</span>
+        <span className="wide-only">{selected.length ? `${picked.chars.toLocaleString('en')} of ` : ''}{plural(chars, 'char')}</span>
         <span className="wide-only">markdown</span>
       </>
     ) : null,
-  }, [notes.length, words, chars, picked, folded, tick]);
+  }, [notes.length, words, chars, picked.words, picked.chars, selected.length, folded, tick]);
 
   if (!nb) {
     return (
@@ -115,7 +118,7 @@ export function NotebookPage() {
             <NotebookEditor notebookId={nb.id} notes={notes} startNote={wanted}
               onMention={(target) => navigate(`/note/${target}`)} onView={onView} />
           </div>
-          <Minimap view={view} tick={tick} scroller={scroller.current} />
+          <Minimap view={view} tick={tick} scroller={scroller.current} fromLine={view ? view.state.doc.lineAt(shown.from).number : 1} />
         </div>
       </div>
     </>

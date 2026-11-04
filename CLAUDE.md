@@ -46,7 +46,10 @@ An editor for notes: a code/doc editor's calm, after the Digital Meadow referenc
   heading is which note. The phone still edits one note at a time.
   `---` runs on to the column edge in the same typed dash. Tables show as even grids (padded
   cells, dashed header rule) while the caret is outside them; their source is never rewritten.
-  Ctrl/⌘-B toggles the sidebar, so bold is Ctrl/⌘-Shift-B. A notebook opens at its end.
+  Ctrl/⌘-B toggles the sidebar, so bold is Ctrl/⌘-Shift-B; Ctrl/⌘-Shift-L selects every copy of
+  the selection, Ctrl/⌘-D copies the line down, copying with nothing selected takes the line, and
+  find sits at the top. A notebook opens at its end; "newest only" hides every older note, and the
+  counts and the map then cover the newest note alone.
   The web editor is CodeMirror (`apps/web/src/editor`); the phone keeps its native block
   editor and shows block marks muted with a slim block-number gutter.
 - Beside a note on the web: a minimap that swells into readable lines under the pointer.

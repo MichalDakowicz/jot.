@@ -8,19 +8,25 @@ type Props = {
   /** Bumped by the page on every editor update, so the map follows text, caret and scroll. */
   tick: number;
   scroller: HTMLElement | null;
+  /** First line on show (1-based); lines above it are hidden from the page and from the map. */
+  fromLine?: number;
 };
 
-const MAX = 20;
-/** Every line a few pixels tall, whatever the note's length: a long note slides past, like a code editor's map. */
-const BASE = 4;
-const RADIUS = 7;
+const MAX = 22;
+/**
+ * Every line ten pixels tall, whatever the notebook's length, so the map
+ * holds a stretch of about fifty lines and slides along the notebook with the
+ * page — a seeker, not a thumbnail of the whole file.
+ */
+const BASE = 10;
+const RADIUS = 6;
 
 /**
  * The note as a code minimap: one faint bar per line, headings a step
  * stronger. Under the pointer the lines swell into real, readable text, the
  * nearer the larger, so the map reads as a magnifier sliding down the note.
  */
-export function Minimap({ view, tick, scroller }: Props) {
+export function Minimap({ view, tick, scroller, fromLine = 1 }: Props) {
   const pane = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [pointer, setPointer] = useState<number | null>(null);
@@ -48,15 +54,15 @@ export function Minimap({ view, tick, scroller }: Props) {
   const lines = useMemo(() => {
     if (!view) return [];
     const doc = view.state.doc;
-    return Array.from({ length: doc.lines }, (_, i) => {
-      const text = doc.line(i + 1).text;
+    return Array.from({ length: doc.lines - fromLine + 1 }, (_, i) => {
+      const text = doc.line(fromLine + i).text;
       const h = text.match(/^(#{1,4})\s/);
       return { text, level: h ? h[1].length : 0 };
     });
     // The doc object changes identity on every edit; tick tracks that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, tick]);
-  const caretLine = view ? view.state.doc.lineAt(view.state.selection.main.head).number - 1 : -1;
+  }, [view, tick, fromLine]);
+  const caretLine = view ? view.state.doc.lineAt(view.state.selection.main.head).number - fromLine : -1;
 
   const base = BASE;
   const total = base * lines.length;
@@ -67,7 +73,7 @@ export function Minimap({ view, tick, scroller }: Props) {
 
   function jump(index: number) {
     if (!view) return;
-    const line = view.state.doc.line(index + 1);
+    const line = view.state.doc.line(fromLine + index);
     view.dispatch({ selection: { anchor: line.from }, effects: EditorView.scrollIntoView(line.from, { y: 'start', yMargin: 48 }) });
     view.focus();
   }
@@ -87,11 +93,8 @@ export function Minimap({ view, tick, scroller }: Props) {
             return (
               <button key={i} className={'minimap-line' + (l.level ? ` level-${l.level}` : '') + (i === caretLine ? ' caret' : '')}
                 style={{ height: h, fontSize: Math.max(1, h * 0.7) }} onClick={() => jump(i)} tabIndex={-1}>
-                {near > 0.25 ? (
-                  <span className="minimap-text" style={{ opacity: Math.min(1, near * 1.4) }}>{l.text || ' '}</span>
-                ) : (
-                  <span className="minimap-bar" style={{ width: `${Math.min(100, l.text.length * 1.4)}%` }} />
-                )}
+                {/* Real text at every size; lines away from the pointer stay faint so the near ones stand out. */}
+                <span className="minimap-text" style={{ opacity: 0.45 + 0.55 * near }}>{l.text || ' '}</span>
               </button>
             );
           })}
