@@ -255,7 +255,7 @@ export function DesktopChrome({ onProfile }: { onProfile: () => void }) {
   return (
     <>
       <View style={styles.rail}>
-        <LogoMark size={40} elevated={false} />
+        <LogoMark size={40} />
 
         <View style={styles.railIsland}>
           {railButtons.map((b) => {

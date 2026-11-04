@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@expo-google-fonts/figtree": "^0.4.1",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@jot/core": "*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.113.0",
     "@tiptap/core": "^3.31.4",
@@ -33,6 +34,8 @@
     "expo-router": "~57.0.18",
     "expo-secure-store": "~57.0.3",
     "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -40,8 +43,7 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-url-polyfill": "^4.0.0",
-    "react-native-web": "^0.21.2",
-    "@jot/core": "*"
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

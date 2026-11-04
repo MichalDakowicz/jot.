@@ -7,18 +7,17 @@
     "packages/*"
   ],
   "scripts": {
+    "web": "npm run dev -w @jot/web",
+    "build:web": "npm run build -w @jot/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:sharing": "node scripts/test-public-sharing.mjs",
     "mobile": "npm run start -w @jot/mobile",
     "android": "npm run android -w @jot/mobile",
-    "font": "node scripts/build-display-font.mjs",
     "icons": "node scripts/make-icons.mjs"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "^1.0.8",
     "firebase-tools": "^15.30.1",
-    "opentype.js": "^2.0.0",
     "sharp": "^0.35.4",
     "typescript": "~6.0.3"
   }

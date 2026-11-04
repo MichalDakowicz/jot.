@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Blob } from '../components/Blob';
 import { LogoWord } from '../components/Logo';
 import { useOnboarding } from '../lib/onboarding';
 import { ONBOARDING } from '@jot/core/seed';
@@ -23,8 +22,6 @@ export default function Onboarding() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 30 }]}>
-      <Blob size={250} color={c.a200} style={styles.blobRight} />
-      <Blob size={180} color={c.g200} opacity={0.85} style={styles.blobLeft} />
 
       <View style={styles.head}>
         <LogoWord size={22} color={c.a900} stopColor={c.accent} />
@@ -70,8 +67,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
-  blobRight: { position: 'absolute', right: -70, top: 120 },
-  blobLeft: { position: 'absolute', left: -60, bottom: 190 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   skip: { fontFamily: f.b700, fontSize: 13, color: c.a700 },
   body: { gap: 16 },

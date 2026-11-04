@@ -45,3 +45,5 @@ yarn-error.*
 .mcp.json
 
 .firebase/
+.env.*
+!.env.example

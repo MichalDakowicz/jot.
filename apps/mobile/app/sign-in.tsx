@@ -12,16 +12,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Blob } from '../components/Blob';
 import { LogoLockup } from '../components/Logo';
 import { useAuth } from '@jot/core/auth';
-import { c, f, shadow } from '@jot/core/theme/tokens';
+import { signInWithGoogle } from '../lib/google';
+import { c, f } from '@jot/core/theme/tokens';
 
 type Mode = 'in' | 'up';
 
 export default function SignIn() {
   const insets = useSafeAreaInsets();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle: startGoogle } = useAuth();
   const [mode, setMode] = useState<Mode>('in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -55,6 +55,19 @@ export default function SignIn() {
     }
   }
 
+  async function google() {
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      await signInWithGoogle(startGoogle);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Google sign-in did not work.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -71,8 +84,6 @@ export default function SignIn() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <Blob size={220} color={c.a200} style={styles.blobRight} />
-        <Blob size={160} color={c.g200} opacity={0.85} style={styles.blobLeft} />
 
         <View style={{ gap: 14 }}>
           <LogoLockup markSize={58} wordSize={26} />
@@ -88,6 +99,10 @@ export default function SignIn() {
         </View>
 
         <View style={{ gap: 12 }}>
+          <Pressable onPress={google} disabled={busy} style={({ pressed }) => [styles.google, pressed && { borderColor: c.n500 }]}>
+            <Text style={styles.googleText}>Continue with Google</Text>
+          </Pressable>
+          <Text style={styles.or}>or with email</Text>
           {mode === 'up' ? (
             <Field
               label="Your name"
@@ -124,7 +139,7 @@ export default function SignIn() {
             style={({ pressed }) => [styles.cta, (pressed || busy) && { backgroundColor: c.a600 }]}
           >
             {busy ? (
-              <ActivityIndicator color={c.paper} />
+              <ActivityIndicator color={c.bg} />
             ) : (
               <Text style={styles.ctaText}>{mode === 'in' ? 'Sign in' : 'Create account'}</Text>
             )}
@@ -159,40 +174,41 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: c.a100 },
-  blobRight: { position: 'absolute', right: -80, top: 90 },
-  blobLeft: { position: 'absolute', left: -70, bottom: 120 },
+  screen: { flex: 1, backgroundColor: c.bg },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brandText: {
     fontFamily: f.b800,
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
-    color: c.a800,
+    color: c.n600,
   },
-  title: { fontFamily: f.head, fontSize: 34, lineHeight: 40, color: c.a900 },
-  blurb: { fontFamily: f.b400, fontSize: 15, lineHeight: 24, color: c.a800, maxWidth: 320 },
-  label: { fontFamily: f.b700, fontSize: 12, color: c.a800, paddingLeft: 4 },
+  title: { fontFamily: f.head, fontSize: 28, lineHeight: 36, color: c.text },
+  blurb: { fontFamily: f.b400, fontSize: 14, lineHeight: 22, color: c.n700, maxWidth: 340 },
+  label: { fontFamily: f.b700, fontSize: 12, color: c.n600 },
   input: {
-    backgroundColor: c.paper,
-    borderRadius: 999,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
+    backgroundColor: c.surface,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: c.n300,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     fontFamily: f.b500,
     fontSize: 15,
     color: c.text,
-    ...shadow.sm,
   },
   cta: {
     backgroundColor: c.accent,
-    borderRadius: 999,
-    paddingVertical: 18,
+    borderRadius: 6,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 4,
-    ...shadow.md,
   },
-  ctaText: { fontFamily: f.b700, fontSize: 16, color: c.paper },
-  switch: { fontFamily: f.b600, fontSize: 13.5, color: c.a700, textAlign: 'center', paddingVertical: 6 },
-  error: { fontFamily: f.b600, fontSize: 13, color: c.a800, backgroundColor: c.a200, borderRadius: 16, padding: 12 },
-  notice: { fontFamily: f.b600, fontSize: 13, color: c.g800, backgroundColor: c.g200, borderRadius: 16, padding: 12 },
+  ctaText: { fontFamily: f.b700, fontSize: 15, color: c.bg },
+  google: { borderRadius: 6, borderWidth: 1, borderColor: c.n300, backgroundColor: c.paper, paddingVertical: 14, alignItems: 'center' },
+  googleText: { fontFamily: f.b700, fontSize: 15, color: c.text },
+  or: { fontFamily: f.b500, fontSize: 12, color: c.n500, textAlign: 'center' },
+  switch: { fontFamily: f.b600, fontSize: 13, color: c.n700, textAlign: 'center', paddingVertical: 6 },
+  error: { fontFamily: f.b600, fontSize: 13, color: c.a800, backgroundColor: c.a200, borderRadius: 6, padding: 12 },
+  notice: { fontFamily: f.b600, fontSize: 13, color: c.g800, backgroundColor: c.g200, borderRadius: 6, padding: 12 },
 });

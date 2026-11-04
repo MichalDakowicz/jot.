@@ -3,11 +3,10 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 /**
- * The design leans on one organic shape (a CSS `border-radius` with eight
- * different percentages). React Native has no such radius, so the same
- * squish is drawn as a path.
+ * A notebook's colour mark: the rounded square of the app tile, drawn as a
+ * path so it scales from a dot to a swatch.
  */
-const SQUISH = 'M60 0C88 0 100 18 100 50C100 78 82 100 45 100C18 100 0 80 0 50C0 20 26 0 60 0Z';
+const SQUISH = 'M22 0H78C90 0 100 10 100 22V78C100 90 90 100 78 100H22C10 100 0 90 0 78V22C0 10 10 0 22 0Z';
 
 type Props = {
   size: number;

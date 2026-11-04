@@ -1,0 +1,119 @@
+/* ---------- the note: header, editor, map ---------- */
+
+.note-layout { display: grid; grid-template-columns: minmax(0, 1fr) 132px; min-height: 100%; }
+
+.note-column { min-width: 0; padding: 22px 0 80px; }
+
+.note-head { padding: 0 32px 10px 62px; }
+
+
+.note-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; color: var(--muted); font-size: 12px; }
+.note-meta select { background: none; border: 0; color: var(--muted); padding: 0; cursor: pointer; }
+.note-meta select:hover { color: var(--text); }
+
+.editor .cm-editor { background: transparent; color: var(--text); font-size: 14px; }
+.editor .cm-editor.cm-focused { outline: none; }
+.editor .cm-scroller { font-family: var(--mono); line-height: 1.7; overflow: visible; }
+.editor .cm-content { padding: 4px 0; caret-color: var(--accent); max-width: 78ch; }
+.editor .cm-line { padding: 0 32px 0 12px; }
+.editor .cm-cursor { border-left: 2px solid var(--accent); }
+.editor .cm-selectionBackground,
+.editor .cm-focused .cm-selectionBackground,
+.editor ::selection { background: var(--selection) !important; }
+.editor .cm-activeLine { background: var(--active-line); }
+.md-untitled { color: var(--faint); }
+/* The title line: the note's only h1, set a step above the body's headings. */
+.editor .cm-line.md-h1:first-child { padding-top: 0 !important; padding-bottom: 0.3em; }
+
+.editor .cm-gutters { background: transparent; border: 0; color: var(--faint); font-size: 12px; }
+.editor .cm-lineNumbers .cm-gutterElement { min-width: 50px; padding: 0 6px 0 0; text-align: right; }
+.editor .cm-activeLineGutter { background: transparent; color: var(--accent); }
+.editor .cm-gutterElement { line-height: 1.7; }
+
+/* Marks stay in the text, a step back from it. */
+.md-syntax { color: var(--faint); font-weight: 400; font-style: normal; }
+.md-h1, .md-h2, .md-h3, .md-h4 { font-weight: 800; line-height: 1.35; }
+.md-h1 { font-size: var(--h1); padding-top: 0.5em !important; }
+.md-h2 { font-size: var(--h2); padding-top: 0.4em !important; }
+.md-h3 { font-size: var(--h3); padding-top: 0.25em !important; }
+.md-h4 { color: var(--muted); }
+.md-strong { font-weight: 800; }
+.md-em { font-style: italic; }
+.md-strike { text-decoration: line-through; color: var(--muted); }
+.md-mark { background: var(--mark); border-radius: 2px; }
+.md-code { background: var(--raised); border-radius: 3px; }
+.md-link { color: var(--link); }
+.md-url { color: var(--faint); }
+.md-list { color: var(--accent); }
+.md-task { color: var(--accent); cursor: pointer; }
+.md-quote { color: var(--muted); border-left: 2px solid var(--line); }
+.md-fence { background: var(--pane); }
+/* "---" keeps its mark and draws the rule out to the edge of the text column. */
+.md-rule { color: var(--faint); position: relative; }
+.md-rule::after {
+  content: ''; position: absolute; left: calc(12px + 4ch); right: 32px; top: 50%;
+  border-top: 1px dashed var(--faint); pointer-events: none;
+}
+.md-table { white-space: pre; }
+.md-mention { color: var(--link); border-bottom: 1px dotted currentColor; cursor: text; }
+.cm-editor .md-mention:hover { border-bottom-style: solid; }
+
+.md-embed { margin: 6px 32px 10px 12px; max-width: 62ch; }
+.md-embed img { display: block; max-width: 100%; max-height: 420px; border-radius: 6px; border: 1px solid var(--line); }
+.md-embed-caption { display: block; margin-top: 4px; color: var(--faint); font-size: 12px; }
+.md-embed-video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 6px; }
+.md-embed-link a {
+  display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; border: 1px solid var(--line);
+  border-radius: 6px; color: var(--text); background: var(--pane);
+}
+.md-embed-link a:hover { text-decoration: none; border-color: var(--faint); }
+.md-embed-host { font-weight: 700; }
+.md-embed-path { color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cm-tooltip.cm-tooltip-autocomplete {
+  background: var(--pane); border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); overflow: hidden;
+}
+.cm-tooltip-autocomplete > ul > li { padding: 3px 10px !important; color: var(--muted); }
+.cm-tooltip-autocomplete > ul > li[aria-selected] { background: var(--raised) !important; color: var(--text) !important; }
+.cm-completionDetail { color: var(--faint); margin-left: 10px; font-style: normal !important; }
+.cm-completionMatchedText { text-decoration: none !important; color: var(--accent); }
+.cm-panels { background: var(--pane) !important; color: var(--text) !important; border-color: var(--line) !important; }
+.cm-searchMatch { background: var(--mark) !important; }
+
+/* ---------- minimap ---------- */
+
+/* The column keeps its width; the panel inside it grows left over the editor while hovered. */
+.minimap { position: sticky; top: 0; height: calc(100vh - 44px - 26px); z-index: 5; }
+.minimap-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 100%; overflow: hidden;
+  border-left: 1px solid var(--line); background: var(--bg);
+  transition: width 140ms ease-out;
+}
+.minimap:hover .minimap-panel { width: min(440px, 46vw); background: var(--pane); }
+.minimap-lines { position: absolute; inset: 0 0 auto 0; will-change: transform; }
+.minimap-line {
+  display: flex; align-items: center; width: 100%; padding: 0 10px; overflow: hidden;
+  color: var(--muted); white-space: nowrap; text-align: left; line-height: 1;
+}
+.minimap-bar { display: block; height: 55%; min-height: 1px; border-radius: 1px; background: var(--line); }
+.minimap-line.level-1 .minimap-bar, .minimap-line.level-2 .minimap-bar { background: var(--faint); height: 80%; }
+.minimap-line.caret .minimap-bar { background: var(--accent); }
+.minimap-text { overflow: hidden; text-overflow: ellipsis; }
+.minimap-line.level-1, .minimap-line.level-2 { color: var(--text); font-weight: 800; }
+.minimap-line.caret { color: var(--accent); }
+.minimap-line:hover { color: var(--text); }
+.minimap-view { position: absolute; left: 0; right: 0; background: var(--raised); opacity: 0.6; pointer-events: none; }
+
+.references { margin: 28px 32px 0 62px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; }
+.references h2 { margin: 0 0 6px; color: var(--faint); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+.references ul { list-style: none; margin: 0 0 14px; padding: 0; }
+.references li a { color: var(--link); }
+
+@media (max-width: 899px) {
+  .note-layout { grid-template-columns: minmax(0, 1fr); }
+  .minimap { display: none; }
+  .note-head { padding: 0 16px 10px 40px; }
+  .editor .cm-lineNumbers .cm-gutterElement { min-width: 30px; padding-right: 4px; font-size: 11px; }
+  .editor .cm-line { padding: 0 16px 0 8px; }
+  .references { margin: 24px 16px 0 40px; }
+}

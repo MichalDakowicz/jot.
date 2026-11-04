@@ -15,7 +15,7 @@
  * "\u2190-" and then "\u27f5>", never as the four characters written here. Both
  * paths have to be caught — the plain shapes for text that arrives at once.
  *
- * A long arrow is U+27F6 and its kin, which Figtree and the display face do not
+ * A long arrow is U+27F6 and its kin, which JetBrains Mono does not
  * carry; they come from the system font, as any missing glyph does.
  */
 const ARROWS: [string, string][] = [

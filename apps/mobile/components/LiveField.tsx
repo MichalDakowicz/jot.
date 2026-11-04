@@ -270,7 +270,7 @@ const MARKUP = new RegExp('[*~=`\[]');
 export function styleOf(marks: Marks): TextStyle[] {
   const out: TextStyle[] = [];
   if (marks.bold) out.push({ fontFamily: f.b800 });
-  if (marks.em) out.push({ fontStyle: 'italic' });
+  if (marks.em) out.push({ fontFamily: marks.bold ? f.i800 : f.i400 });
   if (marks.strike) out.push({ textDecorationLine: 'line-through' });
   if (marks.mark) out.push({ backgroundColor: c.a200, color: c.a900 });
   if (marks.code) out.push({ fontFamily: f.mono, fontSize: 13.5, color: c.a800 });

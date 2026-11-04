@@ -5,6 +5,8 @@ import { ScrollView, StyleSheet, Text, View, type StyleProp, type TextStyle } fr
 import { parseBlocks, type Block, type Inline, type Mentionable } from '@jot/core/markdown';
 import { c, f } from '@jot/core/theme/tokens';
 
+import { DashedRule } from './DashedRule';
+
 type Handlers = {
   onMention?: (noteId: string) => void;
 };
@@ -145,7 +147,7 @@ function renderBlock(
         </ScrollView>
       );
     case 'rule':
-      return <View key={key} style={styles.rule} />;
+      return <DashedRule key={key} style={styles.rule} />;
     case 'space':
       return <View key={key} style={{ height: compact ? 4 : 9 }} />;
     case 'list':
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
   },
   pCompact: { marginBottom: 0, lineHeight: 24 },
   bold: { fontFamily: f.b800 },
-  em: { fontStyle: 'italic' },
+  em: { fontFamily: f.i400 },
   mark: { backgroundColor: c.a200, color: c.a900 },
   strike: { textDecorationLine: 'line-through' as const },
   code: {
@@ -290,12 +292,7 @@ const styles = StyleSheet.create({
   },
   th: { fontFamily: f.b800, fontSize: 12.5, lineHeight: 20, color: c.n800 },
   tdText: { fontFamily: f.b400, fontSize: 13.5, lineHeight: 21, color: c.n800 },
-  rule: {
-    borderTopWidth: 3,
-    borderStyle: 'dotted',
-    borderColor: c.n400,
-    marginVertical: 18,
-  },
+  rule: { marginVertical: 18 },
   list: { marginBottom: 12, gap: 6 },
   listRow: { flexDirection: 'row', gap: 11, alignItems: 'flex-start' },
   listText: { flex: 1, marginBottom: 0 },

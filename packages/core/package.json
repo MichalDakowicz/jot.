@@ -27,7 +27,16 @@
     "./tiptapDoc": "./src/tiptapDoc.ts",
     "./types": "./src/types.ts",
     "./typing": "./src/typing.ts",
-    "./theme/tokens": "./src/theme/tokens.ts"
+    "./theme/tokens": "./src/theme/tokens.ts",
+    "./graph": "./src/graph.ts",
+    "./theme/ink": "./src/theme/ink.ts",
+    "./embed": "./src/embed.ts",
+    "./fisheye": "./src/fisheye.ts",
+    "./publicContent": "./src/publicContent.ts",
+    "./theme/scheme": "./src/theme/scheme.ts",
+    "./theme/logo": "./src/theme/logo.ts",
+    "./oauth": "./src/oauth.ts",
+    "./titled": "./src/titled.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

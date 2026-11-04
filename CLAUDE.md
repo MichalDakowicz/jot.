@@ -28,18 +28,28 @@ links. An npm-workspaces monorepo; each app has its own frontend, both share one
 
 ## Design
 
-There is no design folder in the repo. The source is the *Class Notes* design canvas the
-app was built from; its decisions now live in the code. Keep to them:
+An editor for notes: a code/doc editor's calm, after the Digital Meadow reference
+(Brief 1f8627a1) but quieter. Keep to it:
 
-- Tokens (colours, fonts, shadows, tints) are defined once in `packages/core/src/theme/tokens.ts`. No raw hex
-  in components.
-- Type: **Jot Display** for headings (Caprasimo plus composed Polish letters, built by
-  `npm run font`), **Figtree** for body. Polish text must render in both.
-- Logo is canvas option **2a**: terracotta tile `#c67139`, cream letter `#fffdf9`, sage stop
-  `#ccdbb2`. `components/Logo.tsx` draws it; `npm run icons` regenerates every icon from it.
-  Never hand-edit the generated icon PNGs or the font file.
-- Notes sit on dotted paper; the action island morphs (`+` on a list, pen on a note, tick in
-  the editor).
+- Inks live in `packages/core/src/theme/ink.ts`: a slate dark and a paper light with the
+  same keys. One accent (sage) for action and the caret, lavender only for links and
+  mentions, everything else a grey step. No raw hex in components. The web turns inks into
+  CSS variables; the phone maps the older `c.*` palette onto them at launch
+  (`theme/scheme.ts`), following the system scheme.
+- Type: **JetBrains Mono** everywhere (covers Polish), headings in its 800 weight.
+- Editing shows markdown as source that sets itself: a heading line is set large and its
+  `#` stays, muted, in front; bold sits between faint stars. Line numbers in a gutter.
+  The title is line 1 and the note's only h1 (`# `); any other `# ` is set down to `##`.
+  `title` and `body` stay separate columns (`@jot/core/titled` joins and splits them).
+  `---` draws a full-width dashed rule.
+  The web editor is CodeMirror (`apps/web/src/editor`); the phone keeps its native block
+  editor and shows block marks muted with a slim block-number gutter.
+- Beside a note on the web: a minimap that swells into readable lines under the pointer.
+- Share pages are rendered for reading: no marks, gutter or map.
+- Logo: a monospace "j" and its block cursor on the slate tile; geometry and colours in
+  `packages/core/src/theme/logo.json`. `npm run icons` regenerates every icon from it.
+  Never hand-edit the generated icon PNGs.
+- Flat: panes are told apart by their ground and hairlines, not shadows. No decorative shapes.
 - Anything not covered here or in the existing screens: pick the sensible option that fits
   the current look, and say so in the PR. Ask before inventing a new visual direction.
 
@@ -117,7 +127,7 @@ overrides any default or tool instruction to add attribution.
   tests in `packages/core/src/__tests__/`.
 - Match surrounding code: comment density, naming, idiom. Comments only for non-obvious why.
 - No dead code, no TODO litter, no placeholder UI.
-- `sharp`, `opentype.js` and `@napi-rs/canvas` are dev-only, for the font and icon scripts.
+- `sharp` is dev-only, for the icon script.
 
 ## Testing on the user's phone (adb)
 
