@@ -5,6 +5,7 @@ import { useStore } from '@jot/core/store';
 
 import { Explorer } from './Explorer';
 import { Icon } from './Icon';
+import { addMenuItems, MOD } from './menu';
 
 type Status = { left?: React.ReactNode; right?: React.ReactNode };
 
@@ -70,7 +71,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <StatusContext.Provider value={setStatus}>
       <DrawerContext.Provider value={toggle}>
-        <div className={'shell' + (drawer ? ' drawer' : '') + (hidden ? ' rail-hidden' : '')}>
+        <div className={'shell' + (drawer ? ' drawer' : '') + (hidden ? ' rail-hidden' : '')}
+          onContextMenu={(e) => addMenuItems(e, [{ label: 'Toggle explorer', keys: `${MOD}B`, run: toggle }])}>
           <Explorer />
           <div className="scrim" onClick={() => setDrawer(false)} />
           <div className="main">{children}</div>
