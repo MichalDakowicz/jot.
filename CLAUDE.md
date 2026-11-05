@@ -44,9 +44,10 @@ An editor for notes: a code/doc editor's calm, after the Digital Meadow referenc
   brings it back with the same id). Notes stay rows of their own, ordered by `notes.position`;
   `@jot/core/notebookDoc` splits and joins, `apps/web/src/editor/sections.ts` tracks which
   heading is which note. The phone still edits one note at a time.
-  `---` runs on to the column edge in the same typed dash. Tables show as even grids (padded
-  cells, dashed header rule), the caret in them or not: only the space around cells is shown
-  padded, so cells are edited in place; their source is never rewritten. One top bar: the
+  `---` runs on to the column edge in the same typed dash. Tables show as even grids, the caret in them or not:
+  each row is laid out on its table's shared column tracks (faint pipes, dashed header rule), long
+  cells wrap inside their column instead of being cut off, and cells are edited in place; their
+  source is never rewritten. One top bar: the
   notebook file in its colour, the note title, then the note's tags, links and icon buttons on the
   right. A faint `# new note` under the last note shows how a note starts, and starts one.
   Ctrl/⌘-B toggles the sidebar, so bold is Ctrl/⌘-Shift-B; Ctrl/⌘-Shift-L selects every copy of

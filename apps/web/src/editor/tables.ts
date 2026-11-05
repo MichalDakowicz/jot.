@@ -1,29 +1,16 @@
-import { type Extension, type Range } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from '@codemirror/view';
+import { Prec, type Extension, type Range } from '@codemirror/state';
+import { Decoration, EditorView, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 
-import { isTableRow, layoutRow, tableColumns } from '@jot/core/tables';
+import { isTableRow, rowParts, tableTracks } from '@jot/core/tables';
 
-/** Padding shown in a table row: spaces, and the pipes and dashes a row left out, drawn faint. */
-class Pad extends WidgetType {
-  constructor(readonly text: string) {
-    super();
-  }
-  eq(other: Pad) {
-    return other.text === this.text;
-  }
-  toDOM() {
-    const span = document.createElement('span');
-    if (/[|\-:]/.test(this.text)) span.className = 'md-syntax';
-    span.textContent = this.text;
-    return span;
-  }
-}
+const hiddenSpace = Decoration.mark({ class: 'md-grid-gap' });
 
 /**
- * Tables read as even grids, with the caret in them or not: each row is
- * padded to its columns and the rule under the header drawn in dashes to the
- * same width. Only the space around the cells is shown differently, so the
- * cells are edited in place and the grid holds. Nothing is written back.
+ * Tables read as even grids, the caret in them or not: every row of a table
+ * is laid out on the same column tracks, its pipes and cells placed in them,
+ * so long cells wrap inside their column instead of running off the edge.
+ * It is the source itself that is laid out, so it is edited in place; nothing
+ * is written back.
  */
 function build(view: EditorView): DecorationSet {
   const doc = view.state.doc;
@@ -37,22 +24,30 @@ function build(view: EditorView): DecorationSet {
     const start = n;
     while (n <= doc.lines && isTableRow(doc.line(n).text)) n++;
     const lines = Array.from({ length: n - start }, (_, k) => doc.line(start + k).text);
-    const columns = tableColumns(lines);
-    if (!columns) continue;
+    const tracks = tableTracks(lines);
+    if (!tracks) continue;
+    const style = `grid-template-columns: ${tracks.join(' ')}`;
     lines.forEach((text, k) => {
-      const from = doc.line(start + k).from;
-      for (const e of layoutRow(text, columns.widths, columns.align, k === 1)) {
-        const widget = new Pad(e.text);
-        ranges.push(e.from === e.to
-          ? Decoration.widget({ widget, side: 1 }).range(from + e.from)
-          : Decoration.replace({ widget }).range(from + e.from, from + e.to));
+      const line = doc.line(start + k);
+      ranges.push(Decoration.line({ class: 'md-grid' + (k === 1 ? ' md-grid-rule' : k === 0 ? ' md-grid-head' : ''), attributes: { style } }).range(line.from));
+      for (const p of rowParts(text)) {
+        ranges.push(Decoration.mark({ class: p.kind === 'pipe' ? 'md-grid-pipe' : 'md-grid-cell', attributes: { style: `grid-column: ${p.column}` } })
+          .range(line.from + p.from, line.from + p.to));
+        // An editor keeps every space, so the ones around a cell's text are folded away; the column pads it.
+        const raw = text.slice(p.from, p.to);
+        const inner = raw.trim();
+        const lead = inner ? raw.indexOf(inner) : raw.length;
+        if (lead) ranges.push(hiddenSpace.range(line.from + p.from, line.from + p.from + lead));
+        const tail = inner ? raw.length - lead - inner.length : 0;
+        if (tail) ranges.push(hiddenSpace.range(line.from + p.to - tail, line.from + p.to));
       }
     });
   }
   return Decoration.set(ranges, true);
 }
 
-export const alignedTables: Extension = ViewPlugin.fromClass(
+// Lowest precedence puts these marks outermost, so pipes and cells are the grid's own children.
+export const alignedTables: Extension = Prec.lowest(ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
     constructor(view: EditorView) {
@@ -63,4 +58,4 @@ export const alignedTables: Extension = ViewPlugin.fromClass(
     }
   },
   { decorations: (v) => v.decorations },
-);
+));
