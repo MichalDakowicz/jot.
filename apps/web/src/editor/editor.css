@@ -1,6 +1,7 @@
 /* ---------- the note: header, editor, map ---------- */
 
 .note-layout { display: grid; grid-template-columns: minmax(0, 1fr) 132px; min-height: 100%; }
+.note-layout.no-map { grid-template-columns: minmax(0, 1fr); }
 
 .note-column { min-width: 0; width: 100%; max-width: calc(78ch + 110px); margin: 0 auto; padding: 22px 0 80px; }
 
@@ -136,7 +137,7 @@
   border-left: 1px solid var(--line); background: var(--bg);
   transition: width 140ms ease-out;
 }
-.minimap:hover .minimap-panel { width: min(440px, 46vw); background: var(--pane); }
+.minimap:hover .minimap-panel { width: min(300px, 30vw); background: var(--pane); }
 .minimap-lines { position: absolute; inset: 0 0 auto 0; will-change: transform; }
 .minimap-line {
   display: flex; align-items: center; width: 100%; padding: 0 10px; overflow: hidden;

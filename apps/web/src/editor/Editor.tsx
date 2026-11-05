@@ -12,9 +12,10 @@ import type { Mentionable } from '@jot/core/markdown';
 
 import { caretLine } from './caretLine';
 import { completions, formatKeys } from './commands';
+import { editorMenu } from './editorMenu';
 import { embeds } from './embeds';
 import { compactFind } from './findPanel';
-import { onlyNewest } from './newest';
+import { focusOnly } from './focusOnly';
 import { editorShortcuts } from './shortcuts';
 import { liveMarkdown, setMentions } from './livemd';
 import { alignedTables } from './tables';
@@ -74,7 +75,8 @@ export function Editor({ value, onChange, mentions, onMention, onView, autoFocus
           ...extensions,
           embeds,
           alignedTables,
-          onlyNewest,
+          focusOnly,
+          editorMenu,
           editorShortcuts,
           completions,
           formatKeys,

@@ -48,11 +48,17 @@ An editor for notes: a code/doc editor's calm, after the Digital Meadow referenc
   cells, dashed header rule) while the caret is outside them; their source is never rewritten.
   Ctrl/⌘-B toggles the sidebar, so bold is Ctrl/⌘-Shift-B; Ctrl/⌘-Shift-L selects every copy of
   the selection, Ctrl/⌘-D copies the line down, copying with nothing selected takes the line, and
-  find sits at the top. A notebook opens at its end; "newest only" hides every older note, and the
-  counts and the map then cover the newest note alone.
+  find sits at the top. A notebook opens at its end; "this note only" hides every note but the one
+  the caret is in (opening another note from the explorer or a link switches to it), and the counts
+  and the map then cover that note alone.
   The web editor is CodeMirror (`apps/web/src/editor`); the phone keeps its native block
   editor and shows block marks muted with a slim block-number gutter.
-- Beside a note on the web: a minimap that swells into readable lines under the pointer.
+- Beside a note on the web: a minimap that swells into readable lines under the pointer. Picking a
+  line already in view only moves the caret; one out of view lands a fifth of the page down.
+  It can be hidden (and brought back) from the right-click menu.
+- Right-click on the web opens the app's own menu (`apps/web/src/components/ContextMenu.tsx`), styled
+  like the find panel; elements add their items with `addMenuItems`. Shift-right-click and touch
+  long-press keep the browser's menu.
 - Share pages are rendered for reading: no marks, gutter or map.
 - Logo: a monospace "j" and a square cursor on the slate tile, never with text beside it; geometry and colours in
   `packages/core/src/theme/logo.json`. `npm run icons` regenerates every icon from it.

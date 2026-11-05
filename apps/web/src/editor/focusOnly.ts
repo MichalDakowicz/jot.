@@ -1,61 +1,88 @@
-import { StateEffect, StateField, type EditorState, type Extension } from '@codemirror/state';
+import { EditorState, StateEffect, StateField, type Extension } from '@codemirror/state';
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view';
 
-import { sectionRanges } from './sections';
+import { sectionAt, sectionRanges, setSectionIds } from './sections';
 
-export const setOnlyNewest = StateEffect.define<boolean>();
+type Focus = { id: string | null; from: number; to: number } | null;
 
-const onlyNewestField = StateField.define<boolean>({
-  create: () => false,
-  update: (on, tr) => tr.effects.reduce((v, e) => (e.is(setOnlyNewest) ? e.value : v), on),
+/** Shows one note alone (its id), or every note again (null). */
+export const setFocusOnly = StateEffect.define<string | null>();
+
+function rangeOf(state: EditorState, id: string | null): Focus {
+  const r = sectionRanges(state).find((s) => s.id === id);
+  return r ? { id, from: r.from, to: r.to } : null;
+}
+
+/**
+ * The note on show, as a stretch of the document moved with every edit, so a
+ * new "# " typed inside it stays in view. A copy from elsewhere replaces the
+ * whole text, so the stretch is found again by the note's id.
+ */
+const focusField = StateField.define<Focus>({
+  create: () => null,
+  update(focus, tr) {
+    for (const e of tr.effects) if (e.is(setFocusOnly)) return e.value === null ? null : rangeOf(tr.state, e.value);
+    if (!focus || !tr.docChanged) return focus;
+    if (tr.effects.some((e) => e.is(setSectionIds))) return rangeOf(tr.state, focus.id) ?? null;
+    return { id: focus.id, from: tr.changes.mapPos(focus.from, -1), to: tr.changes.mapPos(focus.to, 1) };
+  },
 });
 
-/** Where the newest note starts; everything before it is hidden while only the newest is shown. */
-export function newestFrom(state: EditorState): number {
-  const ranges = sectionRanges(state);
-  return ranges.length ? ranges[ranges.length - 1].from : 0;
+export function isFocusOnly(state: EditorState): boolean {
+  return !!state.field(focusField, false);
 }
 
-export function isOnlyNewest(state: EditorState): boolean {
-  return state.field(onlyNewestField, false) ?? false;
-}
-
-/** The part of the document that is on show: all of it, or the newest note alone. */
+/** The part of the document that is on show: all of it, or the focused note alone. */
 export function shownRange(state: EditorState): { from: number; to: number } {
-  return { from: isOnlyNewest(state) ? newestFrom(state) : 0, to: state.doc.length };
+  return state.field(focusField, false) ?? { from: 0, to: state.doc.length };
 }
 
 const hidden = Decoration.replace({ block: true });
 
 function hide(state: EditorState): DecorationSet {
-  const from = newestFrom(state);
-  if (!isOnlyNewest(state) || from === 0) return Decoration.none;
-  // Whole lines only: from the top to the end of the line before the newest heading.
-  return Decoration.set([hidden.range(0, from - 1)]);
+  const focus = state.field(focusField);
+  if (!focus) return Decoration.none;
+  const len = state.doc.length;
+  // Whole lines only: the notes above end on the line before the heading, the ones below start on a heading.
+  return Decoration.set([
+    ...(focus.from > 0 ? [hidden.range(0, focus.from - 1)] : []),
+    ...(focus.to < len ? [hidden.range(focus.to, len)] : []),
+  ]);
 }
 
 const hiddenField = StateField.define<DecorationSet>({
   create: hide,
-  update: (deco, tr) => (tr.docChanged || tr.effects.some((e) => e.is(setOnlyNewest)) ? hide(tr.state) : deco),
+  update: (deco, tr) => (tr.docChanged || tr.startState.field(focusField) !== tr.state.field(focusField) ? hide(tr.state) : deco),
   provide: (f) => [EditorView.decorations.from(f), EditorView.atomicRanges.of((view) => view.state.field(f))],
 });
 
-/** Keeps a caret out of the notes that are hidden. */
-const stayInNewest = EditorView.updateListener.of((u) => {
-  if (!isOnlyNewest(u.state) || !(u.selectionSet || u.docChanged)) return;
-  const from = newestFrom(u.state);
-  const head = u.state.selection.main.head;
-  if (from > 0 && head < from) u.view.dispatch({ selection: { anchor: from + 2 } });
+/** Typing and deleting never reach into the hidden notes, nor take the line breaks that fence them off. */
+const guardHidden = EditorState.changeFilter.of((tr) => {
+  const focus = tr.startState.field(focusField);
+  if (!focus || !(tr.isUserEvent('input') || tr.isUserEvent('delete'))) return true;
+  const len = tr.startState.doc.length;
+  return [...(focus.from > 0 ? [0, focus.from] : []), ...(focus.to < len ? [focus.to - 1, len] : [])];
 });
 
-/** Shows every note, or only the newest — the older ones gone from the page, headings and all. */
-export const onlyNewest: Extension = [onlyNewestField, hiddenField, stayInNewest];
+/** Keeps a caret inside the note on show. */
+const stayInFocus = EditorView.updateListener.of((u) => {
+  const focus = u.state.field(focusField);
+  if (!focus || !(u.selectionSet || u.docChanged || u.startState.field(focusField) !== focus)) return;
+  const head = u.state.selection.main.head;
+  const last = focus.to < u.state.doc.length ? focus.to - 1 : focus.to;
+  if (head < focus.from || head > last) u.view.dispatch({ selection: { anchor: Math.min(focus.from + 2, last) } });
+});
 
-export function toggleOnlyNewest(view: EditorView) {
-  const on = !isOnlyNewest(view.state);
-  const from = newestFrom(view.state);
-  view.dispatch({
-    effects: setOnlyNewest.of(on),
-    ...(on && view.state.selection.main.head < from ? { selection: { anchor: Math.min(from + 2, view.state.doc.length) } } : {}),
-  });
+/** Shows every note, or the one in focus alone — the others gone from the page, headings and all. */
+export const focusOnly: Extension = [focusField, hiddenField, guardHidden, stayInFocus];
+
+/** Shows only the note with this id; with focus-only off, does nothing. */
+export function refocus(view: EditorView, id: string) {
+  if (isFocusOnly(view.state)) view.dispatch({ effects: setFocusOnly.of(id) });
+}
+
+/** Turns focus-only on for the note under the caret, or off again. */
+export function toggleFocusOnly(view: EditorView) {
+  const on = !isFocusOnly(view.state);
+  view.dispatch({ effects: setFocusOnly.of(on ? sectionAt(view.state, view.state.selection.main.head) : null) });
 }

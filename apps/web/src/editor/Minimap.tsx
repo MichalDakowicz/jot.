@@ -1,15 +1,20 @@
-import { EditorView } from '@codemirror/view';
+import type { EditorView } from '@codemirror/view';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { fisheye } from '@jot/core/fisheye';
+
+import { addMenuItems } from '../components/menu';
+import { seekLine } from './seek';
 
 type Props = {
   view: EditorView | null;
   /** Bumped by the page on every editor update, so the map follows text, caret and scroll. */
   tick: number;
   scroller: HTMLElement | null;
-  /** First line on show (1-based); lines above it are hidden from the page and from the map. */
+  /** The lines on show (1-based, inclusive); the others are hidden from the page and from the map. */
   fromLine?: number;
+  toLine?: number;
+  onHide: () => void;
 };
 
 const MAX = 22;
@@ -26,7 +31,7 @@ const RADIUS = 6;
  * stronger. Under the pointer the lines swell into real, readable text, the
  * nearer the larger, so the map reads as a magnifier sliding down the note.
  */
-export function Minimap({ view, tick, scroller, fromLine = 1 }: Props) {
+export function Minimap({ view, tick, scroller, fromLine = 1, toLine, onHide }: Props) {
   const pane = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [pointer, setPointer] = useState<number | null>(null);
@@ -54,14 +59,15 @@ export function Minimap({ view, tick, scroller, fromLine = 1 }: Props) {
   const lines = useMemo(() => {
     if (!view) return [];
     const doc = view.state.doc;
-    return Array.from({ length: doc.lines - fromLine + 1 }, (_, i) => {
+    const last = Math.min(toLine ?? doc.lines, doc.lines);
+    return Array.from({ length: Math.max(0, last - fromLine + 1) }, (_, i) => {
       const text = doc.line(fromLine + i).text;
       const h = text.match(/^(#{1,4})\s/);
       return { text, level: h ? h[1].length : 0 };
     });
     // The doc object changes identity on every edit; tick tracks that.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, tick, fromLine]);
+  }, [view, tick, fromLine, toLine]);
   const caretLine = view ? view.state.doc.lineAt(view.state.selection.main.head).number - fromLine : -1;
 
   const base = BASE;
@@ -73,15 +79,14 @@ export function Minimap({ view, tick, scroller, fromLine = 1 }: Props) {
 
   function jump(index: number) {
     if (!view) return;
-    const line = view.state.doc.line(fromLine + index);
-    view.dispatch({ selection: { anchor: line.from }, effects: EditorView.scrollIntoView(line.from, { y: 'start', yMargin: 48 }) });
-    view.focus();
+    seekLine(view, scroller, view.state.doc.line(fromLine + index).from);
   }
 
   return (
     <div className="minimap" ref={pane} aria-label="Note map"
       onMouseMove={(e) => setPointer(e.clientY - e.currentTarget.getBoundingClientRect().top)}
-      onMouseLeave={() => setPointer(null)}>
+      onMouseLeave={() => setPointer(null)}
+      onContextMenu={(e) => addMenuItems(e, [{ label: 'Hide map', run: onHide }])}>
       <div className="minimap-panel">
         {pointer === null && total ? (
           <div className="minimap-view" style={{ top: scroll.top * total - slide, height: Math.max(12, scroll.span * total) }} />
