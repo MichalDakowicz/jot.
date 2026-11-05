@@ -42,8 +42,8 @@ covers Polish. Markdown is edited as source that sets itself — a heading line
 is set large and keeps its `#`, muted, in front. On the web a notebook is a
 single file: each note is a `# Title` section in it, so a new note is just a
 new `# ` line, and the sidebar lists notebooks as files with the open one's
-notes as an outline. The bar under the top shows the note the caret is in —
-its tags, its own public link, its links — and **notebook** opens the
+notes as an outline. The top bar names the notebook file, in its colour, and the
+note the caret is in, with that note's tags, public link and links on the right; **notebook** opens the
 notebook's name, course code, teacher, colour, class times and sharing. On the web the note sits in a
 CodeMirror editor with line numbers, embeds under image, video and link lines,
 and a minimap beside it that swells into readable text under the pointer. Right-click

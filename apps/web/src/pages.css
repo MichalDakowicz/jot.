@@ -34,8 +34,9 @@
 .chip.on { color: var(--accent); border-color: var(--accent); }
 .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 5px; color: var(--muted); }
 .icon-button:hover { background: var(--raised); color: var(--text); }
+.icon-button.on { color: var(--accent); }
 
-.public-link { display: inline-flex; align-items: center; gap: 6px; }
+.public-link { display: inline-flex; align-items: center; gap: 2px; }
 .public-link .hint { max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .field {

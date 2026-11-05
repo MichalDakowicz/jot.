@@ -11,7 +11,7 @@
 .editor .cm-editor { background: transparent; color: var(--text); font-size: 14px; }
 .editor .cm-editor.cm-focused { outline: none; }
 .editor .cm-scroller { font-family: var(--mono); line-height: 1.7; overflow: visible; }
-.editor .cm-content { padding: 4px 0; caret-color: var(--accent); max-width: 78ch; }
+.editor .cm-content { padding: 4px 0; caret-color: var(--accent); max-width: 78ch; flex-shrink: 1; min-width: 0; }
 .editor .cm-line { padding: 0 32px 0 12px; }
 /* Air between source lines, not inside a wrapped one; tables and code fences stay solid blocks. */
 .editor .cm-line:not(.md-table):not(.md-fence) { padding-bottom: 0.35em; }
@@ -53,8 +53,8 @@
   content: '--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
   pointer-events: none;
 }
-.md-table { white-space: pre; }
-.md-table-row { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: top; white-space: pre; scrollbar-width: none; }
+/* A wide table scrolls inside its own lines instead of widening the page. */
+.md-table { white-space: pre; overflow-x: auto; scrollbar-width: none; contain: inline-size; }
 .md-mention { color: var(--link); border-bottom: 1px dotted currentColor; cursor: text; }
 .cm-editor .md-mention:hover { border-bottom-style: solid; }
 
@@ -80,7 +80,7 @@
 /* Find: a compact widget floating at the top right of the text, like a code editor's. */
 .editor .cm-panels, .editor .cm-panels-top { background: none; border: 0; }
 .find {
-  position: fixed; z-index: 30; top: 92px; right: 150px;
+  position: fixed; z-index: 30; top: 52px; right: 150px;
   display: flex; align-items: flex-start; gap: 2px; padding: 4px 6px 4px 2px;
   background: var(--pane); border: 1px solid var(--line); border-radius: 6px;
   box-shadow: 0 6px 18px rgb(0 0 0 / 0.25); font-family: var(--mono); font-size: 12px;
@@ -116,16 +116,13 @@
 
 /* ---------- the note under the caret, and the notebook's own settings ---------- */
 
-/* Same centre line as the text column below it, the map's width kept clear on the right. */
-.note-bar { flex: none; padding: 4px 132px 4px 0; border-bottom: 1px solid var(--line); background: var(--pane); color: var(--muted); font-size: 12px; }
-.note-bar-inner {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-height: 26px;
-  max-width: calc(78ch + 110px); margin: 0 auto; padding-left: 62px;
-}
-.note-bar-title { color: var(--text); font-weight: 700; max-width: 32ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.note-bar-links { display: inline-flex; gap: 10px; color: var(--faint); }
-.note-bar-links a { color: var(--link); }
-.note-bar-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+/* The note the caret is in, at the right of the top bar: tags, links, sharing, delete. */
+.note-tools { display: inline-flex; align-items: center; gap: 4px 14px; min-width: 0; color: var(--muted); font-size: 12px; }
+.note-tools .tag-row { flex-wrap: nowrap; overflow: hidden; }
+.note-tools-links { display: inline-flex; gap: 10px; color: var(--faint); white-space: nowrap; }
+.note-tools-links a { color: var(--link); }
+.new-note-hint { padding: 0.6em 32px 0.6em 12px; color: var(--faint); cursor: pointer; }
+.new-note-hint:hover { color: var(--muted); }
 .notebook-head { margin: 0 32px 6px 62px; font-size: 12px; min-height: 1em; }
 .notebook-settings { margin: 0 32px 18px 62px; padding-bottom: 18px; border-bottom: 1px dashed var(--line); }
 .crumb-note { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -154,8 +151,8 @@
 
 @media (max-width: 899px) {
   .note-layout { grid-template-columns: minmax(0, 1fr); }
-  .note-bar { padding-right: 0; }
-  .note-bar-inner { padding: 0 16px; }
+  .note-tools-links, .note-tools .tag-row { display: none; }
+  .new-note-hint { padding-left: 8px; }
   .notebook-head, .notebook-settings { margin-left: 16px; margin-right: 16px; }
   .minimap { display: none; }
   .find { right: 12px; left: 12px; }
