@@ -1,12 +1,9 @@
 import React from 'react';
 
-import { inkTint } from '@jot/core/theme/ink';
-import { tintOf } from '@jot/core/theme/tokens';
+import { useNotebookInk } from './useNotebookInk';
 
-import { useScheme } from '../theme';
-
-/** A notebook's colour, lifted on the dark page so the deep tints still read. */
+/** A notebook's colour as a dot. */
 export function NotebookDot({ tint, size = 7 }: { tint: number; size?: number }) {
-  const { scheme } = useScheme();
-  return <span className="dot" style={{ background: inkTint(tintOf(tint).hex, scheme), width: size, height: size }} />;
+  const ink = useNotebookInk(tint);
+  return <span className="dot" style={{ background: ink, width: size, height: size }} />;
 }

@@ -1,50 +1,32 @@
 import { type Extension, type Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 
-import { alignTable, isTableRow } from '@jot/core/tables';
+import { isTableRow, layoutRow, tableColumns } from '@jot/core/tables';
 
-/** One table row as laid out: cells padded, pipes and the header rule drawn faint. */
-class AlignedRow extends WidgetType {
-  constructor(readonly text: string, readonly rule: boolean) {
+/** Padding shown in a table row: spaces, and the pipes and dashes a row left out, drawn faint. */
+class Pad extends WidgetType {
+  constructor(readonly text: string) {
     super();
   }
-  eq(other: AlignedRow) {
-    return other.text === this.text && other.rule === this.rule;
+  eq(other: Pad) {
+    return other.text === this.text;
   }
   toDOM() {
     const span = document.createElement('span');
-    span.className = 'md-table-row';
-    if (this.rule) {
-      span.className += ' md-syntax';
-      span.textContent = this.text;
-      return span;
-    }
-    for (const part of this.text.split(/(\|)/)) {
-      if (part === '|') {
-        const pipe = document.createElement('span');
-        pipe.className = 'md-syntax';
-        pipe.textContent = '|';
-        span.append(pipe);
-      } else {
-        span.append(part);
-      }
-    }
+    if (/[|\-:]/.test(this.text)) span.className = 'md-syntax';
+    span.textContent = this.text;
     return span;
-  }
-  ignoreEvent() {
-    return false;
   }
 }
 
 /**
- * Tables read as even grids. Away from the caret each row is shown padded to
- * its columns, the rule under the header in dashes to the same width; with
- * the caret inside, the table is its source again. Nothing is written back.
+ * Tables read as even grids, with the caret in them or not: each row is
+ * padded to its columns and the rule under the header drawn in dashes to the
+ * same width. Only the space around the cells is shown differently, so the
+ * cells are edited in place and the grid holds. Nothing is written back.
  */
 function build(view: EditorView): DecorationSet {
-  const { state } = view;
-  const doc = state.doc;
-  const caret = doc.lineAt(state.selection.main.head).number;
+  const doc = view.state.doc;
   const ranges: Range<Decoration>[] = [];
   let n = 1;
   while (n <= doc.lines) {
@@ -54,19 +36,20 @@ function build(view: EditorView): DecorationSet {
     }
     const start = n;
     while (n <= doc.lines && isTableRow(doc.line(n).text)) n++;
-    const end = n - 1;
-    if (caret >= start && caret <= end) continue;
-    const lines = Array.from({ length: end - start + 1 }, (_, k) => doc.line(start + k).text);
-    const aligned = alignTable(lines);
-    if (!aligned) continue;
-    aligned.forEach((text, k) => {
-      const line = doc.line(start + k);
-      if (text !== line.text) {
-        ranges.push(Decoration.replace({ widget: new AlignedRow(text, k === 1) }).range(line.from, line.to));
+    const lines = Array.from({ length: n - start }, (_, k) => doc.line(start + k).text);
+    const columns = tableColumns(lines);
+    if (!columns) continue;
+    lines.forEach((text, k) => {
+      const from = doc.line(start + k).from;
+      for (const e of layoutRow(text, columns.widths, columns.align, k === 1)) {
+        const widget = new Pad(e.text);
+        ranges.push(e.from === e.to
+          ? Decoration.widget({ widget, side: 1 }).range(from + e.from)
+          : Decoration.replace({ widget }).range(from + e.from, from + e.to));
       }
     });
   }
-  return Decoration.set(ranges);
+  return Decoration.set(ranges, true);
 }
 
 export const alignedTables: Extension = ViewPlugin.fromClass(
@@ -76,7 +59,7 @@ export const alignedTables: Extension = ViewPlugin.fromClass(
       this.decorations = build(view);
     }
     update(u: ViewUpdate) {
-      if (u.docChanged || u.selectionSet) this.decorations = build(u.view);
+      if (u.docChanged) this.decorations = build(u.view);
     }
   },
   { decorations: (v) => v.decorations },

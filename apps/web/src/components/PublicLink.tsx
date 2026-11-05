@@ -51,14 +51,16 @@ export function PublicLink({ kind, id, published, inherited = false }: {
     <span className="public-link">
       {live ? (
         <>
-          <a className="chip on" href={url} target="_blank" rel="noreferrer" title={inherited && !enabled ? 'Public through its notebook' : 'Open the public page'}>
-            <Icon name="eye" size={14} /> public
-          </a>
-          <button className="chip" onClick={copy}><Icon name="link" size={14} /> copy</button>
+          <a className="icon-button on" href={url} target="_blank" rel="noreferrer"
+            title={inherited && !enabled ? 'Public through its notebook — open the public page' : 'Public — open the public page'}
+            aria-label="Open the public page"><Icon name="eye" /></a>
+          <button className="icon-button" onClick={copy} title="Copy the public link" aria-label="Copy the public link"><Icon name="link" /></button>
         </>
       ) : null}
-      {inherited && !enabled ? null : (
-        <button className="chip" onClick={toggle}>{enabled ? 'unpublish' : 'publish'}</button>
+      {inherited && !enabled ? null : enabled ? (
+        <button className="icon-button" onClick={toggle} title="Unpublish" aria-label="Unpublish"><Icon name="close" /></button>
+      ) : (
+        <button className="icon-button" onClick={toggle} title="Publish a read-only link" aria-label="Publish a read-only link"><Icon name="eye" /></button>
       )}
       {message ? <span className="hint">{message}</span> : null}
     </span>

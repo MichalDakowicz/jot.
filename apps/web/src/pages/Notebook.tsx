@@ -5,12 +5,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { countOf, plural } from '@jot/core/count';
 import { useStore } from '@jot/core/store';
 
-import { Icon } from '../components/Icon';
 import { addMenuItems, type MenuItem } from '../components/menu';
-import { NoteBar } from '../components/NoteBar';
-import { NotebookDot } from '../components/NotebookDot';
 import { NotebookSettings } from '../components/NotebookSettings';
+import { NoteTools } from '../components/NoteTools';
 import { TopBar, useStatus } from '../components/Shell';
+import { useNotebookInk } from '../components/useNotebookInk';
 import { isFocusOnly, refocus, shownRange, toggleFocusOnly } from '../editor/focusOnly';
 import { Minimap } from '../editor/Minimap';
 import { NotebookEditor } from '../editor/NotebookEditor';
@@ -29,6 +28,7 @@ export function NotebookPage() {
   const [tick, setTick] = useState(0);
   const [settings, setSettings] = useState(false);
   const [mapShown, setMapShown] = useMapShown();
+  const ink = useNotebookInk(nb?.tint ?? 0);
   const scroller = useRef<HTMLDivElement>(null);
   const wanted = params.get('note');
 
@@ -95,13 +95,6 @@ export function NotebookPage() {
     ...(mapShown ? [] : [{ label: 'Show map', run: () => setMapShown(true) }]),
   ];
 
-  function addNote() {
-    if (!view) return;
-    const end = view.state.doc.length;
-    view.dispatch({ changes: { from: end, insert: '\n# ' }, selection: { anchor: end + 3 }, scrollIntoView: true });
-    view.focus();
-  }
-
   function removeCurrent() {
     if (!view || !current) return;
     const range = sectionRanges(view.state).find((r) => r.id === current.id);
@@ -115,16 +108,14 @@ export function NotebookPage() {
     <>
       <TopBar
         crumbs={<>
-          <NotebookDot tint={nb.tint} />
-          <span className="here">{nb.name.toLowerCase().replace(/\s+/g, '-')}.md</span>
+          <span className="here" style={{ color: ink }}>{nb.name.toLowerCase().replace(/\s+/g, '-')}.md</span>
           {current ? <><span className="sep">›</span><span className="crumb-note">{current.title || 'Untitled'}</span></> : null}
         </>}
         actions={<>
-          <button className="chip" onClick={addNote}><Icon name="plus" size={14} /> note</button>
+          {current ? <NoteTools note={current} notebookPublic={!!nb.is_public} onRemove={removeCurrent} /> : null}
           <button className={'chip' + (settings ? ' on' : '')} aria-pressed={settings} onClick={() => setSettings((s) => !s)}>notebook</button>
         </>}
       />
-      {current ? <NoteBar note={current} notebookPublic={!!nb.is_public} onRemove={removeCurrent} /> : null}
       <div className="content" ref={scroller} onContextMenu={(e) => addMenuItems(e, pageItems)}>
         <div className={'note-layout' + (mapShown ? '' : ' no-map')}>
           <div className="note-column">

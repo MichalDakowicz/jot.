@@ -6,6 +6,7 @@ import { useStore } from '@jot/core/store';
 import type { Note } from '@jot/core/types';
 
 import { Editor } from './Editor';
+import { newNoteHint } from './newNoteHint';
 import { notebookSections, setSectionIds } from './sections';
 import { useNotebookDoc } from './useNotebookDoc';
 
@@ -22,7 +23,7 @@ export function NotebookEditor({ notebookId, notes, startNote, onMention, onView
   const { value, ids, onChange } = useNotebookDoc(notebookId, notes, { createNote, updateNote, deleteNote });
   // Made once per notebook: later ids arrive with copies from elsewhere.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const extensions = useMemo(() => [notebookSections(ids)], [notebookId]);
+  const extensions = useMemo(() => [notebookSections(ids), newNoteHint], [notebookId]);
   // A notebook opens at its end, where the newest note is; a link to one note opens at that note.
   const startAt = useMemo(() => {
     const k = startNote ? notes.findIndex((n) => n.id === startNote) : -1;
