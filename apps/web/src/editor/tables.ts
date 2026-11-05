@@ -3,12 +3,15 @@ import { Decoration, EditorView, ViewPlugin, type DecorationSet, type ViewUpdate
 
 import { isTableRow, rowParts, tableTracks } from '@jot/core/tables';
 
+import { tableKeys, tableScroll } from './tableScroll';
+
 const hiddenSpace = Decoration.mark({ class: 'md-grid-gap' });
 
 /**
  * Tables read as even grids, the caret in them or not: every row of a table
  * is laid out on the same column tracks, its pipes and cells placed in them,
- * so long cells wrap inside their column instead of running off the edge.
+ * every column as wide as its widest cell; a table wider than the line scrolls
+ * sideways, all its rows together (see tableScroll).
  * It is the source itself that is laid out, so it is edited in place; nothing
  * is written back.
  */
@@ -16,6 +19,7 @@ function build(view: EditorView): DecorationSet {
   const doc = view.state.doc;
   const ranges: Range<Decoration>[] = [];
   let n = 1;
+  let table = 0;
   while (n <= doc.lines) {
     if (!isTableRow(doc.line(n).text)) {
       n++;
@@ -26,10 +30,13 @@ function build(view: EditorView): DecorationSet {
     const lines = Array.from({ length: n - start }, (_, k) => doc.line(start + k).text);
     const tracks = tableTracks(lines);
     if (!tracks) continue;
+    const id = String(table++);
     const style = `grid-template-columns: ${tracks.join(' ')}`;
     lines.forEach((text, k) => {
       const line = doc.line(start + k);
-      ranges.push(Decoration.line({ class: 'md-grid' + (k === 1 ? ' md-grid-rule' : k === 0 ? ' md-grid-head' : ''), attributes: { style } }).range(line.from));
+      const kind = k === 1 ? ' md-grid-rule' : k === 0 ? ' md-grid-head' : '';
+      const last = k === lines.length - 1 ? ' md-grid-last' : '';
+      ranges.push(Decoration.line({ class: 'md-grid' + kind + last, attributes: { style, 'data-table': id } }).range(line.from));
       for (const p of rowParts(text)) {
         ranges.push(Decoration.mark({ class: p.kind === 'pipe' ? 'md-grid-pipe' : 'md-grid-cell', attributes: { style: `grid-column: ${p.column}` } })
           .range(line.from + p.from, line.from + p.to));
@@ -47,7 +54,7 @@ function build(view: EditorView): DecorationSet {
 }
 
 // Lowest precedence puts these marks outermost, so pipes and cells are the grid's own children.
-export const alignedTables: Extension = Prec.lowest(ViewPlugin.fromClass(
+export const alignedTables: Extension = [tableScroll, tableKeys, Prec.lowest(ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
     constructor(view: EditorView) {
@@ -58,4 +65,4 @@ export const alignedTables: Extension = Prec.lowest(ViewPlugin.fromClass(
     }
   },
   { decorations: (v) => v.decorations },
-));
+))];

@@ -10,7 +10,8 @@
 
 .editor .cm-editor { background: transparent; color: var(--text); font-size: 14px; }
 .editor .cm-editor.cm-focused { outline: none; }
-.editor .cm-scroller { font-family: var(--mono); line-height: 1.7; overflow: visible; }
+/* Clipped sideways: a caret far along a wide table must not let the editor slide the page to reach it. */
+.editor .cm-scroller { font-family: var(--mono); line-height: 1.7; overflow: clip visible; }
 .editor .cm-content { padding: 4px 0; caret-color: var(--accent); max-width: 78ch; flex-shrink: 1; min-width: 0; }
 .editor .cm-line { padding: 0 32px 0 12px; }
 /* Air between source lines, not inside a wrapped one; tables and code fences stay solid blocks. */
@@ -53,12 +54,14 @@
   content: '--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
   pointer-events: none;
 }
-/* A table row is a grid on its table's shared tracks: pipes faint in narrow columns, long cells wrapping in theirs. */
-.editor .cm-line.md-grid { display: grid; align-items: start; }
+/* A table row is a grid on its table's shared tracks: pipes faint in narrow columns, every cell on one line. */
+.editor .cm-line.md-grid { display: grid; align-items: start; overflow-x: auto; scrollbar-width: none; }
+/* The last row carries the table's scrollbar; the rows above follow it. */
+.editor .cm-line.md-grid-last { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .md-grid-pipe, .md-grid-cell { min-width: 0; }
 .md-grid-gap { display: none; }
 .md-grid-pipe { color: var(--faint); overflow: hidden; }
-.md-grid-cell { padding: 0 1ch; overflow-wrap: anywhere; }
+.md-grid-cell { padding: 0 1ch; }
 /* The rule under the header runs on in the same typed dash to its column's edge. */
 .md-grid-rule .md-grid-cell { position: relative; color: transparent; }
 .md-grid-rule .md-grid-cell::after {

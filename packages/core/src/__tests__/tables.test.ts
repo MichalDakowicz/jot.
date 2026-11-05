@@ -27,21 +27,21 @@ describe('rowParts', () => {
 describe('tableTracks', () => {
   it('gives every column its widest cell, the rule left out of the count', () => {
     expect(tableTracks(['| bohater | zawód |', '| ------------------------ | --- |', '| Winston Smith | Ministerstwo Prawdy |']))
-      .toEqual(['1ch', 'fit-content(16ch)', '1ch', 'fit-content(22ch)', '1ch']);
+      .toEqual(['1ch', '16ch', '1ch', '22ch', '1ch']);
   });
 
-  it('lets a long column share the line and wrap', () => {
+  it('keeps a long column at its full width, for the table to scroll', () => {
     const long = 'w'.repeat(60);
     expect(tableTracks(['| name | note |', '| --- | --- |', `| Julia | ${long} |`]))
-      .toEqual(['1ch', 'fit-content(8ch)', '1ch', 'minmax(12ch, 60fr)', '1ch']);
+      .toEqual(['1ch', '8ch', '1ch', '63ch', '1ch']);
   });
 
   it('counts Polish letters as one column each', () => {
-    expect(tableTracks(['| ż | x |', '|---|---|', '| żółw | y |'])).toEqual(['1ch', 'fit-content(7ch)', '1ch', 'fit-content(6ch)', '1ch']);
+    expect(tableTracks(['| ż | x |', '|---|---|', '| żółw | y |'])).toEqual(['1ch', '7ch', '1ch', '6ch', '1ch']);
   });
 
   it('reads a table whose rule leaves off the closing pipe, as GitHub allows', () => {
-    expect(tableTracks(['| a | b', '| --- | --- ', '| x | y |'])).toEqual(['1ch', 'fit-content(6ch)', '1ch', 'fit-content(6ch)', '1ch']);
+    expect(tableTracks(['| a | b', '| --- | --- ', '| x | y |'])).toEqual(['1ch', '6ch', '1ch', '6ch', '1ch']);
   });
 
   it('leaves alone what is not a table', () => {
