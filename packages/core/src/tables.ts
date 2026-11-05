@@ -7,9 +7,6 @@
 const ROW = /^\s*\|.*\S/;
 const RULE = /^\s*\|(\s*:?-+:?\s*(\||$))+\s*$/;
 
-/** A column this many characters wide or less keeps its width; wider ones share what is left and wrap. */
-const NARROW = 24;
-
 /** Whether `line` is a row of a pipe table: it opens with "|"; the closing one may be left off. */
 export function isTableRow(line: string): boolean {
   return ROW.test(line);
@@ -47,9 +44,9 @@ export function rowParts(line: string): RowPart[] {
 
 /**
  * The grid every row of a table shares: a narrow track for each pipe, and per
- * column its widest cell's width, or, for a long column, a share of the line
- * by length so its cells wrap instead of running off the edge. Null when the
- * lines are not a table with a header rule.
+ * column its widest cell's width, so no cell wraps; a table wider than the
+ * line scrolls sideways instead. Null when the lines are not a table with a
+ * header rule.
  */
 export function tableTracks(lines: string[]): string[] | null {
   if (lines.length < 2 || !lines.every(isTableRow) || !RULE.test(lines[1])) return null;
@@ -62,7 +59,7 @@ export function tableTracks(lines: string[]): string[] | null {
   const tracks = ['1ch'];
   for (let c = 0; c < columns; c++) {
     const width = Math.max(3, ...rows.filter((_, r) => r !== 1).map((r) => [...(r[c] ?? '')].length));
-    tracks.push(width <= NARROW ? `fit-content(${width + 3}ch)` : `minmax(12ch, ${width}fr)`, '1ch');
+    tracks.push(`${width + 3}ch`, '1ch');
   }
   return tracks;
 }
