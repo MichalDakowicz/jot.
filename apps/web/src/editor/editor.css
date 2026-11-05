@@ -13,6 +13,8 @@
 .editor .cm-scroller { font-family: var(--mono); line-height: 1.7; overflow: visible; }
 .editor .cm-content { padding: 4px 0; caret-color: var(--accent); max-width: 78ch; }
 .editor .cm-line { padding: 0 32px 0 12px; }
+/* Air between source lines, not inside a wrapped one; tables and code fences stay solid blocks. */
+.editor .cm-line:not(.md-table):not(.md-fence) { padding-bottom: 0.35em; }
 .editor .cm-cursor { border-left: 2px solid var(--accent); }
 .editor .cm-selectionBackground,
 .editor .cm-focused .cm-selectionBackground,
