@@ -16,6 +16,7 @@ import { BrowserRouter } from 'react-router';
 import { AuthProvider } from '@jot/core/auth';
 import { StoreProvider } from '@jot/core/store';
 
+import { ContextMenu } from './components/ContextMenu';
 import { AppRoutes } from './routes';
 import { installTheme } from './theme';
 
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <StoreProvider>
           <AppRoutes />
+          <ContextMenu />
         </StoreProvider>
       </AuthProvider>
     </BrowserRouter>

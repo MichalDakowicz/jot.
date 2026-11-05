@@ -46,7 +46,9 @@ notes as an outline. The bar under the top shows the note the caret is in —
 its tags, its own public link, its links — and **notebook** opens the
 notebook's name, course code, teacher, colour, class times and sharing. On the web the note sits in a
 CodeMirror editor with line numbers, embeds under image, video and link lines,
-and a minimap beside it that swells into readable text under the pointer.
+and a minimap beside it that swells into readable text under the pointer. Right-click
+opens Jot's own menu: editing and formatting in the editor, "show this note only",
+and hiding or showing the map.
 Share pages drop all of that and render the note for reading.
 
 The mark is a monospace "j" with a square cursor on the slate tile, shown
