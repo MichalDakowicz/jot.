@@ -1,102 +1,68 @@
 /**
- * Markdown tables laid out as text: every column padded to its widest cell,
- * the rule under the header drawn in dashes to the same width, so the source
- * reads as an even grid in a monospace face. The layout is a list of edits to
- * show over each row; the source itself is never rewritten.
+ * Markdown pipe tables read as grids: each row's pipes and cells, and the
+ * column tracks every row of a table shares, so the source itself is laid
+ * out in even columns and edited in place. The source is never rewritten.
  */
 
 const ROW = /^\s*\|.*\S/;
 const RULE = /^\s*\|(\s*:?-+:?\s*(\||$))+\s*$/;
+
+/** A column this many characters wide or less keeps its width; wider ones share what is left and wrap. */
+const NARROW = 24;
 
 /** Whether `line` is a row of a pipe table: it opens with "|"; the closing one may be left off. */
 export function isTableRow(line: string): boolean {
   return ROW.test(line);
 }
 
-/** One cell of a row: where it runs between its pipes, and where its text sits inside that. */
-type Cell = { from: number; to: number; textFrom: number; textTo: number; closed: boolean };
+/** A stretch of a row: a pipe or a cell, and the grid column (1-based) it sits in. */
+export type RowPart = { from: number; to: number; kind: 'pipe' | 'cell'; column: number };
 
-function cellsOf(line: string): { lead: number; cells: Cell[]; tail: number } {
+/**
+ * A row cut into its pipes and cells, end to end, so every character belongs
+ * to one: space before the first pipe and after the last goes with that pipe,
+ * an escaped pipe stays inside its cell.
+ */
+export function rowParts(line: string): RowPart[] {
+  const parts: RowPart[] = [];
   const lead = line.indexOf('|');
-  const cells: Cell[] = [];
+  let cell = 0;
   let from = lead + 1;
-  for (let i = from; i <= line.length; i++) {
+  parts.push({ from: 0, to: from, kind: 'pipe', column: 1 });
+  for (let i = from; i < line.length; i++) {
     if (line[i] === '\\' && line[i + 1] === '|') {
       i++;
       continue;
     }
-    if (i < line.length && line[i] !== '|') continue;
-    const raw = line.slice(from, i);
-    const textFrom = from + (raw.length - raw.trimStart().length);
-    const textTo = Math.max(textFrom, from + raw.trimEnd().length);
-    cells.push({ from, to: i, textFrom, textTo, closed: i < line.length });
+    if (line[i] !== '|') continue;
+    parts.push({ from, to: i, kind: 'cell', column: 2 * cell + 2 });
+    parts.push({ from: i, to: i + 1, kind: 'pipe', column: 2 * cell + 3 });
+    cell++;
     from = i + 1;
   }
-  // After the closing pipe there is nothing but space, which is not a cell.
-  const last = cells[cells.length - 1];
-  let tail = line.length;
-  if (cells.length > 1 && last.textFrom === last.textTo && !last.closed) {
-    cells.pop();
-    tail = last.from;
-  }
-  return { lead, cells, tail };
-}
-
-const widthOf = (text: string) => [...text].length;
-
-/** How wide each column is and how it aligns, or null when the lines are not a table with a header rule. */
-export function tableColumns(lines: string[]): { widths: number[]; align: string[] } | null {
-  if (lines.length < 2 || !lines.every(isTableRow) || !RULE.test(lines[1])) return null;
-  const rows = lines.map((line) => cellsOf(line).cells.map((c) => line.slice(c.textFrom, c.textTo)));
-  const columns = Math.max(...rows.map((r) => r.length));
-  const align = Array.from({ length: columns }, (_, c) => {
-    const m = rows[1][c] ?? '';
-    return m.startsWith(':') && m.endsWith(':') ? 'center' : m.endsWith(':') ? 'right' : m.startsWith(':') ? 'left' : '';
-  });
-  const widths = Array.from({ length: columns }, (_, c) =>
-    Math.max(3, ...rows.filter((_, r) => r !== 1).map((r) => widthOf(r[c] ?? ''))));
-  return { widths, align };
-}
-
-/** A stretch of a row shown as other text: `from === to` puts text in, otherwise it stands in for the source. */
-export type RowEdit = { from: number; to: number; text: string };
-
-function ruleCell(width: number, how: string): string {
-  const dashes = '-'.repeat(width - (how === 'center' ? 2 : how ? 1 : 0));
-  return how === 'center' ? ':' + dashes + ':' : how === 'left' ? ':' + dashes : how === 'right' ? dashes + ':' : dashes;
+  if (line.slice(from).trim()) parts.push({ from, to: line.length, kind: 'cell', column: 2 * cell + 2 });
+  else parts[parts.length - 1].to = line.length;
+  return parts.filter((p) => p.to > p.from);
 }
 
 /**
- * What to show over one row so it reads as `| a   | b |` in even columns:
- * one space inside each pipe, cells padded to their column, the rule in
- * dashes, missing cells and a missing closing pipe filled in. The text of a
- * cell is never covered, so it can be edited in place while the grid holds.
+ * The grid every row of a table shares: a narrow track for each pipe, and per
+ * column its widest cell's width, or, for a long column, a share of the line
+ * by length so its cells wrap instead of running off the edge. Null when the
+ * lines are not a table with a header rule.
  */
-export function layoutRow(line: string, widths: number[], align: string[], rule: boolean): RowEdit[] {
-  const { lead, cells, tail } = cellsOf(line);
-  const edits: RowEdit[] = [];
-  const show = (from: number, to: number, text: string) => {
-    if (line.slice(from, to) !== text) edits.push({ from, to, text });
-  };
-  show(0, lead, '');
-  widths.forEach((width, c) => {
-    const how = align[c] ?? '';
-    const cell = cells[c];
-    if (!cell) {
-      show(tail, tail, ' ' + (rule ? ruleCell(width, how) : ' '.repeat(width)) + ' |');
-      return;
-    }
-    const text = line.slice(cell.textFrom, cell.textTo);
-    if (rule || !text) {
-      show(cell.from, cell.to, ' ' + (rule ? ruleCell(width, how) : ' '.repeat(width)) + ' ');
-    } else {
-      const gap = width - widthOf(text);
-      const before = how === 'right' ? gap : how === 'center' ? Math.floor(gap / 2) : 0;
-      show(cell.from, cell.textFrom, ' ' + ' '.repeat(before));
-      show(cell.textTo, cell.to, ' '.repeat(gap - before) + ' ');
-    }
-    if (!cell.closed) show(cell.to, cell.to, '|');
+export function tableTracks(lines: string[]): string[] | null {
+  if (lines.length < 2 || !lines.every(isTableRow) || !RULE.test(lines[1])) return null;
+  const rows = lines.map((line) => {
+    const cells: string[] = [];
+    for (const p of rowParts(line)) if (p.kind === 'cell') cells[(p.column - 2) / 2] = line.slice(p.from, p.to).trim();
+    return Array.from(cells, (c) => c ?? '');
   });
-  show(tail, line.length, '');
-  return edits;
+  const columns = Math.max(...rows.map((r) => r.length));
+  const tracks = ['1ch'];
+  for (let c = 0; c < columns; c++) {
+    const width = Math.max(3, ...rows.filter((_, r) => r !== 1).map((r) => [...(r[c] ?? '')].length));
+    tracks.push(width <= NARROW ? `fit-content(${width + 3}ch)` : `minmax(12ch, ${width}fr)`, '1ch');
+  }
+  return tracks;
 }

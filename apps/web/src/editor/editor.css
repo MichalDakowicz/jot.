@@ -53,8 +53,18 @@
   content: '--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
   pointer-events: none;
 }
-/* A wide table scrolls inside its own lines instead of widening the page. */
-.md-table { white-space: pre; overflow-x: auto; scrollbar-width: none; contain: inline-size; }
+/* A table row is a grid on its table's shared tracks: pipes faint in narrow columns, long cells wrapping in theirs. */
+.editor .cm-line.md-grid { display: grid; align-items: start; }
+.md-grid-pipe, .md-grid-cell { min-width: 0; }
+.md-grid-gap { display: none; }
+.md-grid-pipe { color: var(--faint); overflow: hidden; }
+.md-grid-cell { padding: 0 1ch; overflow-wrap: anywhere; }
+/* The rule under the header runs on in the same typed dash to its column's edge. */
+.md-grid-rule .md-grid-cell { position: relative; color: transparent; }
+.md-grid-rule .md-grid-cell::after {
+  content: '--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  position: absolute; inset: 0 1ch; overflow: hidden; white-space: nowrap; color: var(--faint);
+}
 .md-mention { color: var(--link); border-bottom: 1px dotted currentColor; cursor: text; }
 .cm-editor .md-mention:hover { border-bottom-style: solid; }
 
